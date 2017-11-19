@@ -16,15 +16,17 @@ int main(void){
     greet_user();
 
     enum types_commandes usr, proc;
+    usr  = USER;
+    proc = PROCESS;
     int shm_usr = initialize_shm(usr);
     if(shm_usr==-1){
-        fprintf(STDERR_FILENO, "[main()] : Initialisation of user SHM failed. Initialisation aborded.\n");
+        fprintf(stderr, "[main()] : Initialisation of user SHM failed. Initialisation aborded.\n");
         perror("shm_open");
         exit(EXIT_FAILURE);
     }
     int shm_proc = initialize_shm(proc);
-    if(shm_usr==-1){
-        fprintf(STDERR_FILENO, "[main()] : Initialisation of process SHM failed. Initialisation aborded.\n");
+    if(shm_proc==-1){
+        fprintf(stderr, "[main()] : Initialisation of process SHM failed. Initialisation aborded.\n");
         perror("shm_open");
         exit(EXIT_FAILURE);
     }
@@ -35,19 +37,20 @@ void greet_user(){
     printf("please visit https://github.com/antoineguillory/DaemonUserProcInfo for other informations\n");
 }
 
-int initialize_shm(types_commandes typecmd){
+int initialize_shm(enum types_commandes typecmd){
     int shm_fd;
     switch(typecmd){
         case USER: 
-            shm_fd = shm_open(SHM_USER_CMD, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-            shm_unlink(SHM_USER_CMD);
+            shm_fd = shm_open(SHM_USR_CMD, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+            shm_unlink(SHM_USR_CMD);
+
             return shm_fd;
         case PROCESS:
             shm_fd = shm_open(SHM_PROCESS_CMD, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
             shm_unlink(SHM_PROCESS_CMD);
             return shm_fd;
         default:
-            fprintf(STDERR_FILENO, "[initialize_shm()] : Unknown type of SHM. Initialisation aborded.\n", );
+            fprintf(stderr, "[initialize_shm()] : Unknown type of SHM. Initialisation aborded.\n");
             perror("Unknown SHM");
             exit(EXIT_FAILURE);
     }
