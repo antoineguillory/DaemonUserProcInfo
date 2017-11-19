@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <fcntl.h> 
 #include <errno.h>
+#include <pthread.h>
 
 #include "globals_daemons_consts.h"
 #include "server_consts.h"
@@ -13,7 +14,20 @@
 
 int main(void){
     greet_user();
-    initialize_shm();
+
+    enum types_commandes usr, proc;
+    int shm_usr = initialize_shm(usr);
+    if(shm_usr==-1){
+        fprintf(STDERR_FILENO, "[main()] : Initialisation of user SHM failed. Initialisation aborded.\n");
+        perror("shm_open");
+        exit(EXIT_FAILURE);
+    }
+    int shm_proc = initialize_shm(proc);
+    if(shm_usr==-1){
+        fprintf(STDERR_FILENO, "[main()] : Initialisation of process SHM failed. Initialisation aborded.\n");
+        perror("shm_open");
+        exit(EXIT_FAILURE);
+    }
 }
 
 void greet_user(){
@@ -33,7 +47,7 @@ int initialize_shm(types_commandes typecmd){
             shm_unlink(SHM_PROCESS_CMD);
             return shm_fd;
         default:
-            printf("Unknown type of SHM. Initialisation aborded.\n", );
+            fprintf(STDERR_FILENO, "[initialize_shm()] : Unknown type of SHM. Initialisation aborded.\n", );
             perror("Unknown SHM");
             exit(EXIT_FAILURE);
     }
