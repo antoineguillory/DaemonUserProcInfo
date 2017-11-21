@@ -11,25 +11,11 @@
 #include "server_consts.h"
 #include "server.h"
 
-
 int main(void){
     greet_user();
-
-    enum types_commandes usr, proc;
-    usr  = USER;
-    proc = PROCESS;
-    int shm_usr = initialize_shm(usr);
-    if(shm_usr==-1){
-        fprintf(stderr, "[main()] : Initialisation of user SHM failed. Initialisation aborted.\n");
-        perror("shm_open");
-        exit(EXIT_FAILURE);
-    }
-    int shm_proc = initialize_shm(proc);
-    if(shm_proc==-1){
-        fprintf(stderr, "[main()] : Initialisation of process SHM failed. Initialisation aborted.\n");
-        perror("shm_open");
-        exit(EXIT_FAILURE);
-    }
+    int fifoFD  = initialize_fifo();
+    //traitement.... a la fin il faudra close le fifo.
+    closeServer(fifoFD);
 }
 
 void greet_user(){
@@ -37,21 +23,23 @@ void greet_user(){
     printf("please visit https://github.com/antoineguillory/DaemonUserProcInfo for other informations\n");
 }
 
-int initialize_shm(enum types_commandes typecmd){
-    int shm_fd;
-    switch(typecmd){
-        case USER: 
-            shm_fd = shm_open(SHM_USR_CMD, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-            shm_unlink(SHM_USR_CMD);
-
-            return shm_fd;
-        case PROCESS:
-            shm_fd = shm_open(SHM_PROCESS_CMD, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-            shm_unlink(SHM_PROCESS_CMD);
-            return shm_fd;
-        default:
-            fprintf(stderr, "[initialize_shm()] : Unknown type of SHM. Initialisation aborted.\n");
+int initialize_fifo(){
+    int fifo_fd = mkfifo(FIFO_RQST_NAME, 0666);
+    switch(fifo_fd){
+        case -1:
+            fprintf(stderr, "[initialize_fifo()] : Fifo creation failed. Initialisation aborted.\n");
             perror("Unknown SHM");
             exit(EXIT_FAILURE);
+        default:
+            return fifo_fd;
+    }
+}
+
+void closeServer(int fifo_fd) {
+    if(fifo_fd==(int)NULL)
+        return;
+    if(close(fifo_fd)==-1){
+        perror("close");
+        exit(EXIT_FAILURE);
     }
 }

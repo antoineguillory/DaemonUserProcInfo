@@ -10,11 +10,17 @@ void greet_user();
 enum types_commandes {PROCESS, USER};
 
 /* @author antoine guillory
- * @brief initialize shm for communication regarding to processes and usrs
- * @since 0.2
- * @return fd of shm.
+ * @brief initialize the fifo to communicate between clients & server
+ * @since 0.3
+ * @return fd of fifo
  */
-int initialize_shm(enum types_commandes typecmd);
+int initialize_fifo();
+
+/* @author antoine guillory
+ * @brief free ressources. must be called when server needs to stop
+ * @since 0..3
+ */
+void closeServer(int fifo_fd);
 
 
 #endif
