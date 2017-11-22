@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <fcntl.h> 
 #include <errno.h>
+#include <string.h>
 #include <pthread.h>
 
 #include "globals_daemons_consts.h"
@@ -14,26 +15,71 @@
 int main(void){
     greet_user();
     int fifoFD  = initialize_fifo();
-    //traitement.... a la fin il faudra close le fifo.
+    wait_for_next_question(fifoFD);
     closeServer(fifoFD);
 }
 
 void greet_user(){
-    printf("Welcome to DaemonUserInfo Server (Version : %s)\n", SERVER_VERSION);
-    printf("please visit https://github.com/antoineguillory/DaemonUserProcInfo for other informations\n");
+    printf("%s Welcome to DaemonUserInfo Server (Version : %s)\n", SERVER_HEADER, SERVER_VERSION);
+    printf("%s please visit https://github.com/antoineguillory/DaemonUserProcInfo for other informations\n", SERVER_HEADER);
 }
 
 int initialize_fifo(){
     int fifo_fd = mkfifo(FIFO_RQST_NAME, 0666);
     switch(fifo_fd){
         case -1:
-            fprintf(stderr, "[initialize_fifo()] : Fifo creation failed. Initialisation aborted.\n");
+            fprintf(stderr, "%s Fifo creation failed. Initialisation aborted.\n", SERVER_HEADER);
             perror("Unknown SHM");
             exit(EXIT_FAILURE);
         default:
             return fifo_fd;
     }
 }
+
+int wait_for_next_question(int fifoFD){
+    char buf[512];
+    printf("%s Waiting for a client question\n", SERVER_HEADER);
+    while(-1==read(fifoFD, buf, 512));
+    return 0; // temporaire je met ça juste pour que ça compile.
+}
+
+int str_to_request(struct Request* req, char* str) {
+    //First we need to tokenize the str.
+    char* token;
+    char* param;
+    int cpt=1;
+    while( (token = strsep(&str, REQUEST_SEPARATOR))!=NULL ){
+        switch(cpt){
+            case 1:
+                req->shm_linked = token;
+                break;
+            case 2:
+                req->cmd_name   = token;
+                break;
+            case 3:
+                param = token;
+                break;
+            default:
+                return -1;
+        }
+        ++cpt;
+    }
+    if(cpt!=4)
+        return -1;
+
+
+    //Then, we need to remove the ';' from the cmd_param
+    //Of course, to validate that it is a good request, 
+    //first we check that the last char of cmd_param is ';'
+    if(param[(int)(strlen(param)-1)]!=';'){
+        return -1;
+    } else {
+        //char* param2 = malloc(strlen(param)-1);
+        //TODO realocate with -1...
+    }
+    return 0;
+}
+
 
 void closeServer(int fifo_fd) {
     if(fifo_fd==(int)NULL)
