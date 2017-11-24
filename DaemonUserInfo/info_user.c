@@ -1,8 +1,8 @@
-#define _DEFAULT_SOURCE
+#define _XOPEN_SOURCE 500
 
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -10,10 +10,7 @@
 
 #define PATH_PASSWD "/etc/passwd"
 #define SEPARATOR ":"
-
-char *next_info(char *line) {
-  return strsep(&line, SEPARATOR);
-}
+#define NEXT_INFO(line, save)   strtok_r(line, SEPARATOR, &save)
 
 char *cpy(char *s) {
   char *s2 = malloc(strlen(s) + 1);
@@ -22,10 +19,32 @@ char *cpy(char *s) {
 }
 
 uid_t get_uid(char *line) {
-  strsep(&line, SEPARATOR);
-  strsep(&line, SEPARATOR);
-  char *uid_str = strsep(&line, SEPARATOR);
+  char *save = NULL;
+  NEXT_INFO(line, save);
+  line = NULL;
+  NEXT_INFO(line, save);
+  char *uid_str = NEXT_INFO(line, save);
   return (uid_t) atoi(uid_str);
+}
+
+void print_user(char *line) {
+  *(line + strlen(line) - 1) = '\0';
+  char *save = NULL;
+  char *token = NULL;
+  printf("Username : %s\n", NEXT_INFO(line, save));
+  line = NULL;
+  printf("Password : %s\n", NEXT_INFO(line, save));
+  printf("Uuid : %s\n", NEXT_INFO(line, save));
+  printf("Guid : %s\n", NEXT_INFO(line, save));
+  token = NEXT_INFO(line, save);
+  if (*token != '/') {
+    printf("GECOS : %s\n", token);
+    token = NEXT_INFO(line, save);
+  }
+  printf("Directory : %s\n", token);
+  if ((token = NEXT_INFO(line, save)) != NULL) {
+    printf("Shell : %s\n", token);
+  }
 }
 
 int info_user(uid_t user) {
@@ -35,27 +54,23 @@ int info_user(uid_t user) {
     return -1;
   }
   char line[256];
-  int user_found = -1;
+  uid_t uid_current;
   while (fgets(line, 100, f) != NULL) {
     char *tmp = cpy(line);
-    if (get_uid(tmp) == user) {
-      user_found = 0;
-      printf("%u : %s", user, line);
-      free(tmp);
+    uid_current = get_uid(tmp);
+    free(tmp);
+    if (uid_current == user) {
       break;
     }
-    free(tmp);
   }
   if (fclose(f) == -1) {
     perror("fclose");
     return -1;
   }
-  return user_found;
-}
-
-int main(void) {
-  if (info_user(1) == -1) {
-    return EXIT_FAILURE;
+  if (uid_current != user) {
+    fprintf(stderr, "user doesn't found : %s\n", line);
+    return -1;
   }
-  return (EXIT_SUCCESS);
+  print_user(line);
+  return 0;
 }
