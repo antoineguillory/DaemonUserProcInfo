@@ -32,7 +32,7 @@ int str_to_request(struct Request* req, char* str);
  * @brief free ressources. must be called when server needs to stop
  * @since 0.3
  */
-void closeServer(int fifo_fd);
+void close_server(int fifo_fd);
 
 
 #endif

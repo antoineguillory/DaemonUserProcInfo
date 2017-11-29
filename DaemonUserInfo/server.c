@@ -16,7 +16,7 @@ int main(void){
     greet_user();
     int fifoFD  = initialize_fifo();
     wait_for_next_question(fifoFD);
-    closeServer(fifoFD);
+    close_server(fifoFD);
 }
 
 void greet_user(){
@@ -75,7 +75,7 @@ int str_to_request(struct Request* req, char* str) {
 }
 
 
-void closeServer(int fifo_fd) {
+void close_server(int fifo_fd) {
     if(fifo_fd==(int)NULL)
         return;
     if(close(fifo_fd)==-1){
