@@ -18,6 +18,6 @@ void greet_user();
  * @brief wait that the user inputs a command.
  * @since 0.5
  */
-void wait_user_input();
+char* wait_user_input();
 
 #endif

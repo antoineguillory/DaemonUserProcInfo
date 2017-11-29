@@ -5,6 +5,6 @@
 #define PID_MAX 32768
 
 #define CLIENT_HEADER  "[CLIENT] :"
-#define CLIENT_VERSION "0.5"
+#define CLIENT_VERSION "0.6"
 
 #endif
