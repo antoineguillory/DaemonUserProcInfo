@@ -28,11 +28,11 @@ int initialize_fifo(){
     int fifo_fd = mkfifo(FIFO_RQST_NAME, 0666);
     switch(fifo_fd){
         case -1:
-            fprintf(stderr, "%s Fifo creation failed. Initialisation aborted.\n", SERVER_HEADER);
-            perror("Unknown SHM");
-            exit(EXIT_FAILURE);
+          fprintf(stderr, "%s Fifo creation failed. Initialisation aborted.\n", SERVER_HEADER);
+          perror("Unknown SHM");
+          exit(EXIT_FAILURE);
         default:
-            return fifo_fd;
+          return fifo_fd;
     }
 }
 
@@ -40,42 +40,36 @@ int wait_for_next_question(int fifoFD){
     char buf[512];
     printf("%s Waiting for a client question\n", SERVER_HEADER);
     while(-1==read(fifoFD, buf, 512));
-    return 0; // temporaire je met ça juste pour que ça compile.
+    return 0; // temporaire je met ça juste pour que ça compile...
 }
 
 int str_to_request(struct Request* req, char* str) {
     //First we need to tokenize the str.
+    //Then, we need to remove the ';' from the cmd_param
+    //Of course, to validate that it is a good request, 
+    //first we check that the last char of cmd_param is ';'
     char* token;
-    char* param;
+    if(str[(int)(strlen(str)-1)]!=';'){
+        return -1;
+    } else {
+        str[(int)(strlen(str)-1)] = '\0';
+    }
     int cpt=1;
     while( (token = strsep(&str, REQUEST_SEPARATOR))!=NULL ){
         switch(cpt){
             case 1:
-                req->shm_linked = token;
-                break;
+              req->shm_linked = token;
+              break;
             case 2:
-                req->cmd_name   = token;
-                break;
+              req->cmd_name   = token;
+              break;
             case 3:
-                param = token;
-                break;
+              req->cmd_param = token;
+              break;
             default:
-                return -1;
+              return -1;
         }
         ++cpt;
-    }
-    if(cpt!=4)
-        return -1;
-
-
-    //Then, we need to remove the ';' from the cmd_param
-    //Of course, to validate that it is a good request, 
-    //first we check that the last char of cmd_param is ';'
-    if(param[(int)(strlen(param)-1)]!=';'){
-        return -1;
-    } else {
-        //char* param2 = malloc(strlen(param)-1);
-        //TODO realocate with -1...
     }
     return 0;
 }

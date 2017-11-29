@@ -21,7 +21,7 @@ int initialize_fifo();
 int wait_for_next_question(int fifo_fd);
 
 /* @author antoine guillory
- * @brief convert a string formed by "shm_name,req1,paramreq;" to a struct.
+ * @brief convert a string formed by "shm_name,req1,paramreq;" to a well-named struct.
  * @returns -1 if convert failed, 0 else.
  * @params pointer to a struct. char of the wanted to be converted string
  * @since 0.4
