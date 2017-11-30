@@ -18,6 +18,8 @@ int main(void){
     int fifoFD  = initialize_fifo();
     char* next_request;
     next_request = wait_user_input(fifoFD);
+    printf("%s\n", next_request);
+    return 0;
 }
 
 void greet_user(){
@@ -28,34 +30,39 @@ void greet_user(){
 
 int initialize_fifo(){
     int fifo_fd = mkfifo(FIFO_RQST_NAME, 0666);
-    switch(fifo_fd){
+    switch (fifo_fd) {
         case -1:
-            fprintf(stderr, "%s Fifo creation failed. Initialisation aborted.\n", CLIENT_HEADER);
-            perror("Unknown FIFO");
-            exit(EXIT_FAILURE);
+          fprintf(stderr, "%s Fifo creation failed. Initialisation aborted.\n", CLIENT_HEADER);
+          perror("Unknown FIFO");
+          exit(EXIT_FAILURE);
         default:
-            return fifo_fd;
+          return fifo_fd;
     }
 }
 
-char* wait_user_input(int fifo_fd) {
+char* wait_user_input(int fifo_fd){
     unsigned int usr_or_proc_id;
     char* user_name = malloc(256); //256 is the max size of a username...
     //We have to find a solution to reduce this buffer cause' it is vulnerable 
     //to buffer overflow...
-    for (;;){
+
+    //Init of the "char[]" equivalent of the FIFO fd.
+    char buf_fifo_fd[256];
+    sprintf(buf_fifo_fd, "%d", fifo_fd);
+
+    for (;;) {
         char cmd[CMD_SIZE];
         printf("Command ?> ");
         scanf("%s",cmd);
-        if ((strcmp(to_lower(cmd),"exit"))==0){
+        if ((strcmp(to_lower(cmd),"exit"))==0) {
             close_client(fifo_fd);
         }   
-        else if ((strcmp(to_lower(cmd),"proc"))==0){
+        else if ((strcmp(to_lower(cmd),"proc"))==0) {
             usr_or_proc_id=0;
             concat(cmd, ",");
             printf("PID ?>");
             scanf("%u",&usr_or_proc_id);
-            if (usr_or_proc_id>PID_MAX){
+            if (usr_or_proc_id>PID_MAX) {
                 printf("Invalid PID value.\n");
                 continue;
             }
@@ -63,35 +70,49 @@ char* wait_user_input(int fifo_fd) {
             sprintf(str, "%d", usr_or_proc_id);
             concat(cmd,str);
             concat(cmd,",");
-            //TODO...
-        } else if((strcmp(to_lower(cmd),"useru"))==0){
+            //NUL
+            concat(cmd,buf_fifo_fd);
+            concat(cmd,";");
+            return cmd;
+
+        } else if ((strcmp(to_lower(cmd),"useru"))==0) {
             concat(cmd, ",");
             char str[6];
-            printf("UID?(type 'uid' or 'name')>");
+            printf("UID ?>");
             scanf("%u",&usr_or_proc_id);
             sprintf(str, "%d", usr_or_proc_id);
             concat(cmd,str);
             concat(cmd,",");
-            //TODO...
+            //NUL
+            concat(cmd,buf_fifo_fd);
+            concat(cmd,";");
+            return cmd;
 
-        } else if((strcmp(to_lower(cmd),"usern"))==0){
+        } else if ((strcmp(to_lower(cmd),"usern"))==0) {
             concat(cmd, ",");
             printf("Username ?>");
             scanf("%s",user_name);
-            if( (strpbrk(user_name,"/\\")) == NULL){
-                printf("Don't try to buff overflow my prgm pls\n");
+            if ((strpbrk(user_name,"/\\")) != NULL){
+                printf("Don't try to buff overflow my prgm pls :'(\n");
                 continue;
             }
             concat(cmd,user_name);
             concat(cmd,",");
-            //TODO...
+            //NUL
+            concat(cmd,buf_fifo_fd);
+            concat(cmd,";");
+            return cmd;
         }
-    }
+        else {
+            printf("Unknown command !\n");
+            continue;
+        }
+    } // for(;;)
 }
 
 void close_client(int fifo_fd){
     int unlinkstate = unlink(fifo_fd);
-    if(unlinkstate==-1){
+    if (unlinkstate==-1) {
         fprintf(stderr, "%s Fifo destruction failed. please look at /tmp/ to delete the unlinkable fifo\n", CLIENT_HEADER);
         exit(EXIT_FAILURE);
     }

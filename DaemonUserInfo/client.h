@@ -20,4 +20,10 @@ void greet_user();
  */
 char* wait_user_input();
 
+/* @author antoine guillory
+ * @brief free ressources of the client.
+ * @since 0.6
+ */
+void close_client();
+
 #endif
