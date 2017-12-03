@@ -4,7 +4,10 @@ EXECSRV = server
 EXECCLI = client
 SERVER = server.o
 CLIENT = client.o
+LIBUTIL = libutil.o
 GLOBALS = globals_daemons_consts.h
+
+all: $(EXECCLI) $(EXECSRV)
 
 server: $(EXECSRV)
 client: $(EXECCLI)
@@ -12,7 +15,7 @@ client: $(EXECCLI)
 $(EXECSRV): $(SERVER)
 	gcc $(SERVER) $(LDFLAGS) -o $(EXECSRV)
 
-$(CLIENT): $(CLIENT)
+$(EXECCLI): $(CLIENT)
 	gcc $(CLIENT) $(LDFLAGS) -o $(EXECCLI)
 
 clean:

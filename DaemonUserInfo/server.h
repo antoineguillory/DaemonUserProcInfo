@@ -18,21 +18,13 @@ int initialize_fifo();
  * @brief wait for the next question from a client.
  * @since 0.4
  */
-int wait_for_next_question(int fifo_fd);
-
-/* @author antoine guillory
- * @brief convert a string formed by "shm_name,req1,paramreq;" to a struct.
- * @returns -1 if convert failed, 0 else.
- * @params pointer to a struct. char of the wanted to be converted string
- * @since 0.4
- */
-int str_to_request(struct Request* req, char* str);
+void wait_for_next_question(int fifo_fd);
 
 /* @author antoine guillory
  * @brief free ressources. must be called when server needs to stop
  * @since 0.3
  */
-void closeServer(int fifo_fd);
+void close_server(int fifo_fd);
 
 
 #endif
