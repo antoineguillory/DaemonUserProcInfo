@@ -86,3 +86,12 @@ int main(void) {
 
     return EXIT_SUCCESS;
 }
+
+void close_server(int fifo_fd) {
+    if(fifo_fd==(int)NULL)
+        return;
+    if(close(fifo_fd)==-1){
+        perror("close");
+        exit(EXIT_FAILURE);
+    }
+}

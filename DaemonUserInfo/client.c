@@ -1,3 +1,16 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h> 
+#include <errno.h>
+#include <string.h>
+#include <pthread.h>
+
+#include "daemonlibutil.h"
+#include "globals_daemons_consts.h"
+#include "client_consts.h"
 #include "client.h"
 
 int main(void){
@@ -30,7 +43,8 @@ int initialize_fifo(){
 char* wait_user_input(int fifo_fd){
     unsigned int usr_or_proc_id;
     char* user_name = malloc(256); //256 is the max size of a username...
-    //We have to find a solution to reduce this buffer cause' it is vulnerable
+
+    //We have to find a solution to reduce this buffer cause' it is vulnerable 
     //to buffer overflow...
 
     //Init of the "char[]" equivalent of the FIFO fd.

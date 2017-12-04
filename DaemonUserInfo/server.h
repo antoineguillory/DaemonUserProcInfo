@@ -34,6 +34,7 @@ int initialize_fifo();
  */
 void wait_for_next_question(int fifo_fd, sem_t *sem);
 
+
 /* @author antoine guillory
  * @brief free ressources. must be called when server needs to stop
  * @since 0.3

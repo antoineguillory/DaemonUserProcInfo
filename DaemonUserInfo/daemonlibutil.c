@@ -1,3 +1,8 @@
+#include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
 #include "daemonlibutil.h"
 
 char* to_lower(char* str){
@@ -10,9 +15,9 @@ char* to_lower(char* str){
 char* concat(char *s1, char *s2) {
     char *s = malloc(strlen(s1) + strlen(s2) + 1);
     if (s == NULL) {
-		perror("malloc");
-		exit(EXIT_FAILURE);
-	}
+        perror("malloc");
+        exit(EXIT_FAILURE);
+	  }
     strcpy(s, s1);
     strcat(s, s2);
     return s;
