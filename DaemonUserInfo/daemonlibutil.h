@@ -22,4 +22,6 @@ char* concat(char *s1, char *s2);
  */
 void rand_str(char *dest, size_t length);
 
+char *rdmnb_to_str(size_t n);
+
 #endif

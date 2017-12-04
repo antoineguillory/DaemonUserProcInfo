@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <fcntl.h> 
+#include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 #include <pthread.h>
@@ -33,7 +33,6 @@ int initialize_fifo();
  * @since 0.4
  */
 void wait_for_next_question(int fifo_fd, sem_t *sem);
-
 
 /* @author antoine guillory
  * @brief free ressources. must be called when server needs to stop

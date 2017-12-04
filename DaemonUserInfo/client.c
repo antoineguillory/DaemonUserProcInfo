@@ -1,25 +1,23 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h> 
-#include <errno.h>
-#include <string.h>
-#include <pthread.h>
-
-#include "daemonlibutil.h"
-#include "globals_daemons_consts.h"
-#include "client_consts.h"
 #include "client.h"
+
+#define SIZE_FIXE 2048
+#define SHM_NAME  "/shm_"
+#define NB_NUMBER_FOR_NAME_SHM 10
 
 int main(void){
     greet_user();
-    int fifoFD  = initialize_fifo();
-    char* next_request;
-    next_request = wait_user_input(fifoFD);
-    printf("%s\n", next_request);
-    return 0;
+    int fifoFD = open_fifo(FIFO_RQST_NAME);
+    char *shm_name = concat(SHM_NAME, rdmnb_to_str(NB_NUMBER_FOR_NAME_SHM));
+    char *shm = initialize_shm(shm_name);
+    if (shm == NULL) {
+      return EXIT_FAILURE;
+    }
+    while (1) {
+      request *r = extract_request();
+      send_request(fifoFD, r, shm);
+      printf("%s\n", shm);
+    }
+    return EXIT_SUCCESS;
 }
 
 void greet_user(){
@@ -28,23 +26,43 @@ void greet_user(){
     printf("%s please visit https://github.com/antoineguillory/DaemonUserProcInfo for other informations\n", CLIENT_HEADER);
 }
 
-int initialize_fifo(){
-    int fifo_fd = open(FIFO_RQST_NAME, 0666);
-    switch (fifo_fd) {
-        case -1:
-          fprintf(stderr, "%s Fifo open failed. Initialisation aborted.\n", CLIENT_HEADER);
-          perror("Unknown FIFO");
-          exit(EXIT_FAILURE);
-        default:
-          return fifo_fd;
+int open_fifo(char *fifo_name){
+    int fifo_fd = open(fifo_name, 0666);
+    if (fifo_fd == -1) {
+        fprintf(stderr, "%s Fifo open failed.\n", CLIENT_HEADER);
+        perror("Unknown FIFO");
+        exit(EXIT_FAILURE);
     }
+    return fifo_fd;
+}
+
+char *initialize_shm(char *shm_name) {
+  int fd = shm_open(shm_name, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+  if (fd == -1) {
+    perror("shm_open");
+    return NULL;
+  }
+  if (shm_unlink(shm_name) == -1) {
+    perror("shm_unlink");
+    return NULL;
+  }
+  if (ftruncate(fd, SIZE_SHM) == -1) {
+    perror("ftruncate");
+    return NULL;
+  }
+  char *mem = mmap(NULL, SIZE_SHM,
+    PROT_WRITE | PROT_READ, MAP_SHARED, fd, NULL);
+  if (mem == MAP_FAILED) {
+    perror("mmap");
+    return NULL;
+  }
+  return mem;
 }
 
 char* wait_user_input(int fifo_fd){
     unsigned int usr_or_proc_id;
     char* user_name = malloc(256); //256 is the max size of a username...
-
-    //We have to find a solution to reduce this buffer cause' it is vulnerable 
+    //We have to find a solution to reduce this buffer cause' it is vulnerable
     //to buffer overflow...
 
     //Init of the "char[]" equivalent of the FIFO fd.
