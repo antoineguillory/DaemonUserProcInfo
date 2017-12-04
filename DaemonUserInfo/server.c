@@ -36,7 +36,6 @@ void treatment_request(int fifoFD) {
 		perror("read");
 		exit(EXIT_FAILURE);
 	}
-	// traitement du parametre si info_user
 	// + appel à la fonction demandée
 	// + lecture du résultat
 	// + envoie du résultat
@@ -79,11 +78,11 @@ void close_server(int fifo_fd) {
 
 int main(void) {
     greet_user();
-    
+
     int fifoFD = initialize_fifo();
     sem_t *sem = initialize_sem(SEM_RQST_NAME, 0);
-    
+
     wait_for_next_question(fifoFD, sem);
-    
+
     return EXIT_SUCCESS;
 }
