@@ -29,10 +29,10 @@ void greet_user(){
 }
 
 int initialize_fifo(){
-    int fifo_fd = mkfifo(FIFO_RQST_NAME, 0666);
+    int fifo_fd = open(FIFO_RQST_NAME, 0666);
     switch (fifo_fd) {
         case -1:
-          fprintf(stderr, "%s Fifo creation failed. Initialisation aborted.\n", CLIENT_HEADER);
+          fprintf(stderr, "%s Fifo open failed. Initialisation aborted.\n", CLIENT_HEADER);
           perror("Unknown FIFO");
           exit(EXIT_FAILURE);
         default:
@@ -43,6 +43,7 @@ int initialize_fifo(){
 char* wait_user_input(int fifo_fd){
     unsigned int usr_or_proc_id;
     char* user_name = malloc(256); //256 is the max size of a username...
+
     //We have to find a solution to reduce this buffer cause' it is vulnerable 
     //to buffer overflow...
 
@@ -56,7 +57,7 @@ char* wait_user_input(int fifo_fd){
         scanf("%s",cmd);
         if ((strcmp(to_lower(cmd),"exit"))==0) {
             close_client(fifo_fd);
-        }   
+        }
         else if ((strcmp(to_lower(cmd),"proc"))==0) {
             usr_or_proc_id=0;
             concat(cmd, ",");
@@ -108,6 +109,37 @@ char* wait_user_input(int fifo_fd){
             continue;
         }
     } // for(;;)
+}
+
+int str_to_request(request *req, char* str) {
+    //First we need to tokenize the str.
+    //Then, we need to remove the ';' from the cmd_param
+    //Of course, to validate that it is a good request,
+    //first we check that the last char of cmd_param is ';'
+    char* token;
+    if(str[(int)(strlen(str)-1)]!=';'){
+        return -1;
+    } else {
+        str[(int)(strlen(str)-1)] = '\0';
+    }
+    int cpt=1;
+    while( (token = strsep(&str, REQUEST_SEPARATOR))!=NULL ){
+        switch(cpt){
+            case 1:
+              req->shm_linked = token;
+              break;
+            case 2:
+              req->cmd_name   = token;
+              break;
+            case 3:
+              req->cmd_param = token;
+              break;
+            default:
+              return -1;
+        }
+        ++cpt;
+    }
+    return 0;
 }
 
 void close_client(int fifo_fd){
