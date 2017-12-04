@@ -17,4 +17,4 @@
  */
 int info_proc(pid_t pid);
 
-#endif	//INFO_PROC
+#endif  //INFO_PROC

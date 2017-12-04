@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <fcntl.h> 
+#include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 #include <pthread.h>
@@ -16,23 +16,27 @@
 #include "client_consts.h"
 
 /* @author antoine guillory
- * @brief initialize the fifo to communicate between clients & server
- * @since 0.5
- * @return fd of fifo
- */
-int initialize_fifo();
-
-/* @author antoine guillory
  * @brief greets the user while starting the server
  * @since 0.5
  */
 void greet_user();
 
 /* @author antoine guillory
+ * @brief initialize the fifo to communicate between clients & server
+ * @since 0.5
+ * @return fd of fifo
+ */
+int open_fifo(char *fifo_name);
+
+
+char *initialize_shm(char *shm_name);
+
+/* @author antoine guillory
  * @brief wait that the user inputs a command.
  * @since 0.5
  */
-char* wait_user_input();
+char *wait_user_input();
+
 
 /* @author antoine guillory
  * @brief convert a string formed by "req1,paramreq,shm_name;"
