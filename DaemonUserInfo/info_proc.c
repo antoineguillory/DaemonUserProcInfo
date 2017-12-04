@@ -1,12 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
+#define "info_proc.h"
 
 #define PREFIX_FILE "/proc/"
 #define SUFFIX_FILE_STATUS "/status"
 #define SUFFIX_FILE_CMD "/cmdline"
-#define SEPARATOR ":"
 
 /*
  * Function must be move to util.c
@@ -96,20 +92,20 @@ void read_line(FILE *fd) {
  */
 void read_status(FILE *fd) {
 	read_line(fd);  	// Name
-	printf(SEPARATOR);
+	printf(SEPARATOR_PROC);
 	read_line(fd);		// Umask
-	printf(SEPARATOR);
+	printf(SEPARATOR_PROC);
 	read_line(fd);  	// State
-	printf(SEPARATOR);
+	printf(SEPARATOR_PROC);
 	skip(fd, '\n');
 	skip(fd, '\n');
 	read_line(fd);  	// Pid
-	printf(SEPARATOR);
+	printf(SEPARATOR_PROC);
 	read_line(fd);  	// Pid of parent process
-	printf(SEPARATOR);
+	printf(SEPARATOR_PROC);
 	skip(fd, '\n');
 	read_line(fd);  	// Uid Real, effective, saved set
-	printf(SEPARATOR);
+	printf(SEPARATOR_PROC);
 	read_line(fd);  	// Gid Real, effective, saved set
 }
 
@@ -139,18 +135,11 @@ int info_proc_read(pid_t pid, char *suffix, void (*read)(FILE *)) {
 	return 0;
 }
 
-/*
- * Function read in stdout information of proc with pid = pid.
- * 	Format = "cmdline:name:umask:state:pid:ppid:uidreal:uideffect:	\
- * 				uidsave:gidreal:gideffect:uidsave\n"
- * 
- * 		return -1 if error else 0.
- */
 int info_proc(pid_t pid) {
 	if (info_proc_read(pid, SUFFIX_FILE_CMD, read_content) == -1) {
 		return -1;
 	}
-	printf(SEPARATOR);
+	printf(SEPARATOR_PROC);
 	if (info_proc_read(pid, SUFFIX_FILE_STATUS, read_status) == -1) {
 		return -1;
 	}
@@ -158,10 +147,3 @@ int info_proc(pid_t pid) {
 	
 	return 0;
 }
-
-// Jeux d'essais
-
-//int main(void) {
-	//info_proc(30513);
-	//return EXIT_SUCCESS;
-//}

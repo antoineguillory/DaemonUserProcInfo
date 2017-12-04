@@ -1,16 +1,3 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h> 
-#include <errno.h>
-#include <string.h>
-#include <pthread.h>
-
-#include "daemonlibutil.h"
-#include "globals_daemons_consts.h"
-#include "client_consts.h"
 #include "client.h"
 
 int main(void){

@@ -1,6 +1,20 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h> 
+#include <errno.h>
+#include <string.h>
+#include <pthread.h>
+
+#include "daemonlibutil.h"
+#include "globals_daemons_consts.h"
+#include "client_consts.h"
+
 /* @author antoine guillory
  * @brief initialize the fifo to communicate between clients & server
  * @since 0.5
@@ -21,9 +35,11 @@ void greet_user();
 char* wait_user_input();
 
 /* @author antoine guillory
- * @brief convert a string formed by "req1,paramreq,shm_name;" to a well-named struct.
+ * @brief convert a string formed by "req1,paramreq,shm_name;"
+ * 	to a well-named struct.
  * @returns -1 if convert failed, 0 else.
- * @params pointer to a struct. char of the wanted to be converted string
+ * @params pointer to a struct. char of the wanted to be
+ * 	converted string
  * @since 0.4
  */
 int str_to_request(request *req, char* str);

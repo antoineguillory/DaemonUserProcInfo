@@ -1,6 +1,20 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h> 
+#include <errno.h>
+#include <string.h>
+#include <pthread.h>
+#include <semaphore.h>
+
+#include "globals_daemons_consts.h"
+#include "server_consts.h"
+
 /* @author antoine guillory
  * @brief greets the user while starting the server
  * @since 0.2
@@ -18,7 +32,7 @@ int initialize_fifo();
  * @brief wait for the next question from a client.
  * @since 0.4
  */
-void wait_for_next_question(int fifo_fd);
+void wait_for_next_question(int fifo_fd, sem_t *sem);
 
 /* @author antoine guillory
  * @brief free ressources. must be called when server needs to stop

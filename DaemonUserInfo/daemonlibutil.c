@@ -1,9 +1,3 @@
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-
 #include "daemonlibutil.h"
 
 char* to_lower(char* str){
@@ -30,7 +24,8 @@ void rand_str(char *dest, size_t length) {
                      "abcdefghijklmnopqrstuvwxyz"
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     while (length-- > 0) {
-        size_t index = (double) rand() / RAND_MAX * (sizeof charset - 1);
+        size_t index = (double) rand() / RAND_MAX
+				* (sizeof charset - 1);
         *dest++ = charset[index];
     }
     *dest = '\0';

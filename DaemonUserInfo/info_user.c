@@ -1,19 +1,9 @@
-#define _XOPEN_SOURCE 500
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <limits.h>
+#define "info_user.h"
 
 #define PATH_PASSWD "/etc/passwd"
-#define SEPARATOR ":"
 #define MAX_LENGTH_LINE 256
 
-#define NEXT_INFO(line, save)   strtok_r(line, SEPARATOR, &save)
+#define NEXT_INFO(line, save)   strtok_r(line, SEPARATOR_USER, &save)
 
 /*
  *  Choose your type of information what you would communicate on input.
@@ -49,17 +39,17 @@ void print_user(char *line) {
     *(line + strlen(line) - 1) = '\0';
     char *save = NULL;
     char *token = NULL;
-    printf("%s%s", NEXT_INFO(line, save), SEPARATOR);   //Username
+    printf("%s%s", NEXT_INFO(line, save), SEPARATOR_USER);   //Username
     line = NULL;
-    printf("%s%s", NEXT_INFO(line, save), SEPARATOR);   //Password
-    printf("%s%s", NEXT_INFO(line, save), SEPARATOR);   //Uuid
-    printf("%s%s", NEXT_INFO(line, save), SEPARATOR);   //Guid
+    printf("%s%s", NEXT_INFO(line, save), SEPARATOR_USER);   //Password
+    printf("%s%s", NEXT_INFO(line, save), SEPARATOR_USER);   //Uuid
+    printf("%s%s", NEXT_INFO(line, save), SEPARATOR_USER);   //Guid
     token = NEXT_INFO(line, save);
     if (*token != '/') {
-        printf("%s%s", token, SEPARATOR);               //GECOS
+        printf("%s%s", token, SEPARATOR_USER);               //GECOS
         token = NEXT_INFO(line, save);
     }
-    printf("%s%s", token, SEPARATOR);                   //Directory
+    printf("%s%s", token, SEPARATOR_USER);                   //Directory
     if ((token = NEXT_INFO(line, save)) != NULL) {
         printf("%s", token);                			//Shell
     }
@@ -131,11 +121,6 @@ int select_user(void *user, char **line, FILE *f,
     return 0;
 }
 
-/*
- *  Send informations about user in STDOUT_FILENO.
- *    User can be indicate with uid or string.
- * 		return -1 if error else 0.
- */
 int info_user(void *user, enum choose_type type) {
     FILE *f;
     if ((f = fopen(PATH_PASSWD,"r")) == NULL) {
