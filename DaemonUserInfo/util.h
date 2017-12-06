@@ -1,5 +1,5 @@
-#ifndef DAEMONLIBUTIL_H
-#define DAEMONLIBUTIL_H
+#ifndef UTIL_H
+#define UTIL_H
 
 #include <ctype.h>
 #include <string.h>
@@ -22,4 +22,6 @@ char* concat(char *s1, char *s2);
  */
 void rand_str(char *dest, size_t length);
 
-#endif
+char *rdmnb_to_str(size_t n);
+
+#endif // UTIL_H

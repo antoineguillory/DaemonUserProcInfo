@@ -6,14 +6,12 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <fcntl.h> 
-#include <errno.h>
+#include <fcntl.h>
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
 
-#include "globals_daemons_consts.h"
-#include "server_consts.h"
+#include "global_server.h"
 
 /* @author antoine guillory
  * @brief greets the user while starting the server
@@ -34,7 +32,6 @@ int initialize_fifo();
  */
 void wait_for_next_question(int fifo_fd, sem_t *sem);
 
-
 /* @author antoine guillory
  * @brief free ressources. must be called when server needs to stop
  * @since 0.3
@@ -42,4 +39,4 @@ void wait_for_next_question(int fifo_fd, sem_t *sem);
 void close_server(int fifo_fd);
 
 
-#endif
+#endif   //SERVER_H

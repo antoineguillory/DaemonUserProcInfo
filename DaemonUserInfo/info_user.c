@@ -1,4 +1,4 @@
-#define "info_user.h"
+#include "info_user.h"
 
 #define PATH_PASSWD "/etc/passwd"
 #define MAX_LENGTH_LINE 256
@@ -6,20 +6,14 @@
 #define NEXT_INFO(line, save)   strtok_r(line, SEPARATOR_USER, &save)
 
 /*
- *  Choose your type of information what you would communicate on input.
- * 		Must be move to global.h
- */
-enum choose_type {NAME, UID};
-
-/*
  *  Simple copy in a new memomy allocated.
  */
 char *cpy(char *s) {
     char *s2 = malloc(strlen(s) + 1);
     if (s2 == NULL) {
-		perror("malloc");
-		exit(EXIT_FAILURE);
-	}
+      perror("malloc");
+      exit(EXIT_FAILURE);
+    }
     strcpy(s2, s);
     return s2;
 }
@@ -64,16 +58,16 @@ void *get_name(char *line) {
     char *name = NEXT_INFO(line, save);
     char *result = malloc(strlen(name));
     if (result == NULL) {
-		perror("malloc");
-		exit(EXIT_FAILURE);
-	}
+      perror("malloc");
+      exit(EXIT_FAILURE);
+    }
     strcpy(result, name);
     return result;
 }
 
 /*
  *  Extract uid of user with string line in new memory allocated.
- * 		return NULL if error else uid of user.
+ *    return NULL if error else uid of user.
  */
 void *get_uid(char *line) {
     char *save = NULL;
@@ -83,20 +77,21 @@ void *get_uid(char *line) {
     char *uid_str = NEXT_INFO(line, save);
     uid_t *uid = malloc(sizeof(*uid));
     if (uid == NULL) {
-		perror("malloc");
-		exit(EXIT_FAILURE);
-	}
-    *uid = (uid_t) strtol(uid_str, NULL, 10);
-    if (*uid == LONG_MIN || *uid == LONG_MAX) {
-		perror("strtol");
-		return NULL;
-	}
+      perror("malloc");
+      exit(EXIT_FAILURE);
+    }
+    long int r = strtol(uid_str, NULL, 10);
+    if (r == LONG_MIN || r == LONG_MAX) {
+      perror("strtol");
+      return NULL;
+    }
+    *uid = (uid_t) r;
     return uid;
 }
 
 /*
  *  Search user in f, if it find it, and it print it.
- * 		return -1 if error else 0.
+ *    return -1 if error else 0.
  */
 int select_user(void *user, char **line, FILE *f,
       void *(*get)(char *), int (*cmp)(void *, void* )) {
@@ -105,9 +100,9 @@ int select_user(void *user, char **line, FILE *f,
         char *tmp = cpy(*line);
         user_current = get(tmp);
         if (user_current == NULL) {
-			fprintf(stderr, "Problem current user.\n");
-			return -1;
-		}
+          fprintf(stderr, "Problem current user.\n");
+          return -1;
+        }
         free(tmp);
         if (cmp(user, user_current) == 0) {
           break;
@@ -130,9 +125,9 @@ int info_user(void *user, enum choose_type type) {
 
     char *line = malloc(MAX_LENGTH_LINE);
     if (line == NULL) {
-		perror("malloc");
-		exit(EXIT_FAILURE);
-	}
+      perror("malloc");
+      exit(EXIT_FAILURE);
+    }
     void *(*get)(char *) = NULL;
     int (*cmp)(void *, void *) = NULL;
     if (type == NAME) {
@@ -162,7 +157,6 @@ int info_user(void *user, enum choose_type type) {
     }
     return 0;
 }
-
 
 //  Jeux de test
 

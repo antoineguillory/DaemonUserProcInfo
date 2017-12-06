@@ -1,5 +1,5 @@
-#ifndef INFO_PROC
-#define INFO_PROC
+#ifndef INFO_PROC_H
+#define INFO_PROC_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,4 +17,4 @@
  */
 int info_proc(pid_t pid);
 
-#endif	//INFO_PROC
+#endif  //INFO_PROC_H
