@@ -1,15 +1,9 @@
-#define "info_user.h"
+#include "info_user.h"
 
 #define PATH_PASSWD "/etc/passwd"
 #define MAX_LENGTH_LINE 256
 
 #define NEXT_INFO(line, save)   strtok_r(line, SEPARATOR_USER, &save)
-
-/*
- *  Choose your type of information what you would communicate on input.
- *    Must be move to global.h
- */
-enum choose_type {NAME, UID};
 
 /*
  *  Simple copy in a new memomy allocated.
@@ -86,11 +80,12 @@ void *get_uid(char *line) {
       perror("malloc");
       exit(EXIT_FAILURE);
     }
-    *uid = (uid_t) strtol(uid_str, NULL, 10);
-    if (*uid == LONG_MIN || *uid == LONG_MAX) {
+    long int r = strtol(uid_str, NULL, 10);
+    if (r == LONG_MIN || r == LONG_MAX) {
       perror("strtol");
       return NULL;
     }
+    *uid = (uid_t) r;
     return uid;
 }
 
@@ -162,7 +157,6 @@ int info_user(void *user, enum choose_type type) {
     }
     return 0;
 }
-
 
 //  Jeux de test
 

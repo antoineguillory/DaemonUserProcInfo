@@ -7,13 +7,11 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
 
-#include "globals_daemons_consts.h"
-#include "server_consts.h"
+#include "global_server.h"
 
 /* @author antoine guillory
  * @brief greets the user while starting the server
@@ -41,4 +39,4 @@ void wait_for_next_question(int fifo_fd, sem_t *sem);
 void close_server(int fifo_fd);
 
 
-#endif
+#endif   //SERVER_H

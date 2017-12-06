@@ -1,4 +1,4 @@
-#define "info_proc.h"
+#include "info_proc.h"
 
 #define PREFIX_FILE "/proc/"
 #define SUFFIX_FILE_STATUS "/status"
@@ -6,7 +6,7 @@
 
 /*
  * Function must be move to util.c
- * 	return degre ten of argument n.
+ *    return degre ten of argument n.
  */
 size_t degre_int(int n) {
     size_t k = 1;
@@ -18,7 +18,7 @@ size_t degre_int(int n) {
 }
 
 /*
- *	Function which define the filename by suffix.
+ *  Function which define the filename by suffix.
  */
 char *define_filename(pid_t pid, char *suffix) {
     size_t pid_size = degre_int((int) pid);
@@ -41,8 +41,8 @@ char *define_filename(pid_t pid, char *suffix) {
 }
 
 /*
- * 	Function skip information with skip == '\t'
- * 		or line with skip == '\n'
+ * Function skip information with skip == '\t'
+ *    or line with skip == '\n'
  */
 void skip(FILE *fd, char skip) {
     int c = fgetc(fd);
@@ -68,7 +68,7 @@ void read_content(FILE *fd) {
 
 /*
  * Function read information without introduction of information.
- *  This function read one line.
+ *    This function read one line.
  */
 void read_line(FILE *fd) {
     skip(fd, '\t');
@@ -95,7 +95,7 @@ void read_status(FILE *fd) {
     printf(SEPARATOR_PROC);
     read_line(fd);    // Umask
     printf(SEPARATOR_PROC);
-    read_line(fd)   // State
+    read_line(fd);   // State
     printf(SEPARATOR_PROC);
     skip(fd, '\n');
     skip(fd, '\n');

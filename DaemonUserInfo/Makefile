@@ -1,28 +1,28 @@
-CFLAGS = -std=c11 -Wpedantic -Wall -Wextra -Wconversion -Werror -fPIC
-LDFLAGS = -D_XOPEN_SOURCE=500 -pthread
-EXECSRV = server
-EXECCLI = client
-SERVER = server.o
-CLIENT = client.o
-LIBUTIL = libutil.o
-GLOBALS = globals_daemons_consts.h
+CC = gcc
+CFLAGS = -std=c11 -Wall -Wconversion -Werror -Wextra -Wpedantic -fPIC   \
+   -pthread
+LDFLAGS = -lrt
+OBJECTS_SERVER = server.o util.o info_proc.o info_user.o
+OBJECTS_CLIENT = client.o util.o
+EXEC_SERVER = server
+EXEC_CLIENT = client
 
-all: $(EXECCLI) $(EXECSRV)
+all: $(EXEC_CLIENT) $(EXEC_SERVER)
 
-server: $(EXECSRV)
-client: $(EXECCLI)
+$(EXEC_SERVER): $(OBJECTS_SERVER)
+	$(CC) $(CFLAGS) $(OBJECTS_SERVER) $(LDFLAGS) -o $(EXEC_SERVER)
 
-$(EXECSRV): $(SERVER)
-	gcc $(SERVER) $(LDFLAGS) -o $(EXECSRV)
-
-$(EXECCLI): $(CLIENT)
-	gcc $(CLIENT) $(LDFLAGS) -o $(EXECCLI)
+$(EXEC_CLIENT): $(OBJECTS_CLIENT)
+	$(CC) $(CFLAGS) $(OBJECTS_CLIENT) $(LDFLAGS) -o $(EXEC_CLIENT)
 
 clean:
-	$(RM) *.o $(OBJECT)
+	$(RM) $(OBJECTS_SERVER) $(OBJECTS_CLIENT)
 
 fclean: clean
-	$(RM) $(EXEC)
+	$(RM) $(EXEC_SERVER) $(EXEC_CLIENT)
 
-server.o: server.c server.h server_consts.h $(GLOBALS)
-client.o: client.c client.h client_consts.h $(GLOBALS)
+server.o: server.c server.h global_server.h util.h info_proc.h info_user.h
+client.o: client.c client.h global_server.h util.h
+util.o: util.c util.h
+info_proc.o: info_proc.c info_proc.h
+info_user.o: info_user.c info_user.h

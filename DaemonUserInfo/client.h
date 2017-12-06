@@ -1,19 +1,35 @@
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef CLIENT_H
+#define CLIENT_H
+
+#define _XOPEN_SOURCE 500
 
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <string.h>
 #include <pthread.h>
+#include <semaphore.h>
 
-#include "daemonlibutil.h"
-#include "globals_daemons_consts.h"
-#include "client_consts.h"
+#include "util.h"
+#include "global_server.h"
+
+#define SHM_NAME  "/shm_"
+#define CMD_SIZE 6
+#define PID_UID_MAX 32768
+
+#define CMD_PROC  "proc"
+#define CMD_USER_UID "useru"
+#define CMD_USER_NAME "usern"
+#define CMD_EXIT  "exit"
+
+#define CLIENT_HEADER  "[CLIENT] :"
+#define CLIENT_VERSION "0.6"
+
+void print_help();
 
 /* @author antoine guillory
  * @brief greets the user while starting the server
@@ -21,32 +37,17 @@
  */
 void greet_user();
 
-/* @author antoine guillory
- * @brief initialize the fifo to communicate between clients & server
- * @since 0.5
- * @return fd of fifo
- */
 int open_fifo(char *fifo_name);
 
+void close_fifo(int fifo_fd);
 
 char *initialize_shm(char *shm_name);
 
-/* @author antoine guillory
- * @brief wait that the user inputs a command.
- * @since 0.5
- */
-char *wait_user_input();
+request *extract_request(char *shm_name);
 
+int send_request(int fifo_fd, request *r);
 
-/* @author antoine guillory
- * @brief convert a string formed by "req1,paramreq,shm_name;"
- * 	to a well-named struct.
- * @returns -1 if convert failed, 0 else.
- * @params pointer to a struct. char of the wanted to be
- * 	converted string
- * @since 0.4
- */
-int str_to_request(request *req, char* str);
+int wait_reponse();
 
 /* @author antoine guillory
  * @brief free ressources of the client.
@@ -54,4 +55,4 @@ int str_to_request(request *req, char* str);
  */
 void close_client();
 
-#endif
+#endif  //CLIENT_H

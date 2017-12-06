@@ -6,7 +6,7 @@ void greet_user(){
 }
 
 int initialize_fifo() {
-    int fifo_fd = mkfifo(FIFO_RQST_NAME, 0666);
+    int fifo_fd = mkfifo(FIFO_SERVER_NAME, 0666);
     if (fifo_fd == -1) {
         fprintf(stderr, "%s Fifo creation failed. Initialisation aborted.\n", SERVER_HEADER);
         perror("Unknown SHM");
@@ -30,9 +30,9 @@ sem_t *initialize_sem(char *sem_name, unsigned int value) {
     return sem;
 }
 
-void treatment_request(int fifoFD) {
+void treatment_request(int fifo_fd) {
     request *r = NULL;
-    if (read(fifoFD, r, sizeof(*r)) < sizeof(*r)) {
+    if ((size_t)read(fifo_fd, r, sizeof(*r)) < sizeof(*r)) {
         perror("read");
         exit(EXIT_FAILURE);
     }
@@ -41,7 +41,7 @@ void treatment_request(int fifoFD) {
     // + envoie du résultat
 }
 
-void wait_for_next_question(int fifoFD, sem_t *sem) {
+void wait_for_next_question(int fifo_fd, sem_t *sem) {
     while (1) {
         if (sem_wait(sem) == -1) {
             perror("sem_wait");
@@ -54,7 +54,7 @@ void wait_for_next_question(int fifoFD, sem_t *sem) {
             case 0 :
                 break;
             default :
-                treatment_request(fifoFD);
+                treatment_request(fifo_fd);
         }
     }
 }
@@ -67,7 +67,7 @@ void close_server(int fifo_fd) {
         }
     }
     // Suppression du fifo ?
-    if (unlink(FIFO_RQST_NAME) == -1) {
+    if (unlink(FIFO_SERVER_NAME) == -1) {
         perror("unlink");
         exit(EXIT_FAILURE);
     }
@@ -79,10 +79,10 @@ void close_server(int fifo_fd) {
 int main(void) {
     greet_user();
 
-    int fifoFD = initialize_fifo();
+    int fifo_fd = initialize_fifo();
     sem_t *sem = initialize_sem(SEM_RQST_NAME, 0);
 
-    wait_for_next_question(fifoFD, sem);
+    wait_for_next_question(fifo_fd, sem);
 
     return EXIT_SUCCESS;
 }
