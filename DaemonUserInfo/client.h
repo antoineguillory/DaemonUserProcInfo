@@ -3,20 +3,6 @@
 
 #define _XOPEN_SOURCE 500
 
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <string.h>
-#include <pthread.h>
-#include <semaphore.h>
-
-#include "util.h"
-#include "global_server.h"
-
 #define SHM_NAME  "/shm_"
 #define CMD_SIZE 6
 #define PID_UID_MAX 32768
@@ -28,6 +14,9 @@
 
 #define CLIENT_HEADER  "[CLIENT] :"
 #define CLIENT_VERSION "0.6"
+
+#include "util.h"
+#include "global_server.h"
 
 void print_help();
 

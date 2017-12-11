@@ -1,12 +1,13 @@
 #ifndef INFO_PROC_H
 #define INFO_PROC_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/types.h>
 
 #define SEPARATOR_PROC ":"
+
+#define PREFIX_FILE "/proc/"
+#define SUFFIX_FILE_STATUS "/status"
+#define SUFFIX_FILE_CMD "/cmdline"
 
 /*
  * Function read in stdout information of proc with pid = pid.

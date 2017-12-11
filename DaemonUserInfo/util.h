@@ -2,10 +2,7 @@
 #define UTIL_H
 
 #include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
+
 
 /* @author https://stackoverflow.com/questions/2661766/c-convert-a-mixed-case-string-to-all-lower-case
  * @brief return the to lower version of this string

@@ -1,4 +1,10 @@
 #include "util.h"
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <ctype.h>
+
 
 char* to_lower(char* str){
     for(int i = 0; str[i]; i++){

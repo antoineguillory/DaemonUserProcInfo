@@ -1,8 +1,9 @@
 #include "info_proc.h"
 
-#define PREFIX_FILE "/proc/"
-#define SUFFIX_FILE_STATUS "/status"
-#define SUFFIX_FILE_CMD "/cmdline"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
 
 /*
  * Function must be move to util.c

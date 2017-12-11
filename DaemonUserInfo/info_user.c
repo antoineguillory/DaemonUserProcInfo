@@ -1,9 +1,14 @@
 #include "info_user.h"
 
-#define PATH_PASSWD "/etc/passwd"
-#define MAX_LENGTH_LINE 256
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
-#define NEXT_INFO(line, save)   strtok_r(line, SEPARATOR_USER, &save)
 
 /*
  *  Simple copy in a new memomy allocated.

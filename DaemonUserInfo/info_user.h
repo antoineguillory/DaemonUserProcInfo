@@ -3,14 +3,12 @@
 
 #define _XOPEN_SOURCE 500
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <limits.h>
+
+#define PATH_PASSWD "/etc/passwd"
+#define MAX_LENGTH_LINE 256
+
+#define NEXT_INFO(line, save)   strtok_r(line, SEPARATOR_USER, &save)
 
 #define SEPARATOR_USER ":"
 

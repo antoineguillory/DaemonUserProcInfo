@@ -1,17 +1,9 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <string.h>
-#include <pthread.h>
-#include <semaphore.h>
-
 #include "global_server.h"
+
+#include <semaphore.h>
 
 /* @author antoine guillory
  * @brief greets the user while starting the server
