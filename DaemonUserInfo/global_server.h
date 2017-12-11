@@ -6,10 +6,10 @@
 #define SEM_REPONSE_NAME "/sem_56186841"
 #define SIZE_FIXE_SHM 2048
 
-#define SERVER_VERSION "0.6"
+#define SERVER_VERSION "0.9"
 #define SERVER_HEADER  "[SERVER]:"
 
-/* @author antoine guillory
+/* @author antoine guillory, tom chambaretaud
  * @since 0.4
  * @brief modelize a request that contains the name of the shm
  * to respond. Second the cmd name and the param of the command.

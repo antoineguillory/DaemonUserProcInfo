@@ -1,5 +1,4 @@
-#include "server.h"
-
+#include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -9,6 +8,13 @@
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include "server.h"
+
+/*
+ * Fifo_fd doit être globale. Nous avons besoin de son état dans
+ * L'appel des signaux.
+ */
+int fifo_fd;
 
 void greet_user(){
     printf("%s Welcome to DaemonUserInfo Server (Version : %s)\n", SERVER_HEADER, SERVER_VERSION);
@@ -16,7 +22,7 @@ void greet_user(){
 }
 
 int initialize_fifo() {
-    int fifo_fd = mkfifo(FIFO_SERVER_NAME, 0666);
+    fifo_fd = mkfifo(FIFO_SERVER_NAME, 0666);
     if (fifo_fd == -1) {
         fprintf(stderr, "%s Fifo creation failed. Initialisation aborted.\n", SERVER_HEADER);
         perror("Unknown SHM");
@@ -69,7 +75,7 @@ void wait_for_next_question(int fifo_fd, sem_t *sem) {
     }
 }
 
-void close_server(int fifo_fd) {
+void close_server(void) {
     if (fifo_fd != 0) {
         if (close(fifo_fd) == -1) {
             perror("close");
@@ -83,15 +89,34 @@ void close_server(int fifo_fd) {
     }
 }
 
+void manage_signals(void) {
+    struct sigaction sigintact;
+    sigintact.sa_handler = handle_sig;
+    if (sigaction(SIGINT, &sigintact, NULL) < 0) {
+        printf("%s Cannot manage SIGINT\n",SERVER_HEADER);
+        close_server();
+    }
+}
+
+static void handle_sig(int signum){
+    if(signum==SIGINT){
+        close_server();
+        printf("%s Shutdown... Goodbye !\n", SERVER_HEADER);
+        exit(EXIT_SUCCESS);
+    }
+}
+
 // IL faut que l'on gère les signaux entrant sur le processus,
 //    Ces signaux utiliseront close_server()
 
 int main(void) {
     greet_user();
-
     int fifo_fd = initialize_fifo();
     sem_t *sem = initialize_sem(SEM_RQST_NAME, 0);
-
+    //Initialisation of the new behaviour for SIGINT must be called 
+    //after FIFO initialisation. Before that, the default behaviour 
+    //of SIGINT is appropriated.
+    manage_signals();
     wait_for_next_question(fifo_fd, sem);
 
     return EXIT_SUCCESS;
