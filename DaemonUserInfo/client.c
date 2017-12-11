@@ -9,13 +9,13 @@
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
+
+
 #include "client.h"
 
 #include "util.h"
 #include "global_server.h"
 
-
-#define NB_NUMBER_FOR_NAME_SHM 10
 
 int main(void){
     greet_user();

@@ -1,11 +1,10 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#define _XOPEN_SOURCE 500
-
 #define SHM_NAME  "/shm_"
 #define CMD_SIZE 6
 #define PID_UID_MAX 32768
+#define NB_NUMBER_FOR_NAME_SHM 10
 
 #define CMD_PROC  "proc"
 #define CMD_USER_UID "useru"
@@ -17,6 +16,10 @@
 
 #include "util.h"
 #include "global_server.h"
+#include <semaphore.h>
+#include <unistd.h>
+#include <sys/types.h>
+
 
 void print_help();
 

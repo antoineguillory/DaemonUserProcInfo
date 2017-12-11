@@ -1,7 +1,6 @@
 CC = gcc
-CFLAGS = -std=c11 -Wall -Wconversion -Werror -Wextra -Wpedantic -fPIC   \
-   -pthread
-LDFLAGS = -lrt
+CFLAGS = -std=c11 -Wall -Wconversion -Werror -Wextra -Wpedantic -fPIC -D_XOPEN_SOURCE=500 -D_FORTIFY_SOURCE
+LDFLAGS = -lrt -pthread
 OBJECTS_SERVER = server.o util.o info_proc.o info_user.o
 OBJECTS_CLIENT = client.o util.o
 EXEC_SERVER = server
