@@ -29,6 +29,8 @@ void print_help();
  */
 void greet_user();
 
+void handle_error_main(int fifo_fd, char*shm_name);
+
 int open_fifo(char *fifo_name);
 
 void close_fifo(int fifo_fd);

@@ -23,7 +23,7 @@ int main(void){
     char *shm_name = concat(SHM_NAME, rdmnb_to_str(NB_NUMBER_FOR_NAME_SHM));
     char *shm = initialize_shm(shm_name);
     if (shm == NULL) {
-        goto error;
+        handle_error_main(fifo_fd, shm_name);
     }
     while (1) {
         request *r = extract_request(shm_name);
@@ -33,22 +33,23 @@ int main(void){
         //printf("%s,%s,%s;\n", r->shm_linked, r->cmd_name, r->cmd_param);
         if (send_request(fifo_fd, r) == -1 ) {
             free(r);
-            goto error;
+            handle_error_main(fifo_fd, shm_name);
         }
         free(r);
         if (wait_reponse() == -1) {
-            goto error;
+            handle_error_main(fifo_fd, shm_name);
         }
         printf("%s\n", shm);
     }
     printf("%s See u later !\n", CLIENT_HEADER);
     close_client(fifo_fd, shm_name);
     return EXIT_SUCCESS;
+}
 
-    error:
-        fprintf(stderr, "%s Error in the matrix.\n", CLIENT_HEADER);
-        close_client(fifo_fd, shm_name);
-        return EXIT_FAILURE;
+void handle_error_main(int fifo_fd, char*shm_name) {
+    fprintf(stderr, "%s Error in the matrix.\n", CLIENT_HEADER);
+    close_client(fifo_fd, shm_name);
+    exit(EXIT_FAILURE);
 }
 
 void print_help() {
