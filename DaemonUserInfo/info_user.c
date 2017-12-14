@@ -50,7 +50,7 @@ void print_user(char *line) {
     }
     printf("%s%s", token, SEPARATOR_USER);                   //Directory
     if ((token = NEXT_INFO(line, save)) != NULL) {
-        printf("%s", token);                			//Shell
+        printf("%s", token);                            //Shell
     }
     printf("\n");
 }
@@ -121,7 +121,9 @@ int select_user(void *user, char **line, FILE *f,
     return 0;
 }
 
-int info_user(void *user, enum choose_type type) {
+int info_user(usrargs* args) {
+    void* user = args->user;
+    enum choose_type type = args->type;
     FILE *f;
     if ((f = fopen(PATH_PASSWD,"r")) == NULL) {
         perror("fopen");

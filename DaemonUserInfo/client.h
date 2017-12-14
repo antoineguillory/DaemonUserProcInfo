@@ -27,26 +27,30 @@ void print_help();
  * @brief greets the user while starting the server
  * @since 0.5
  */
-void greet_user();
+void greet_user(void);
 
-void handle_error_main(int fifo_fd, char*shm_name);
+void handle_error_main(void);
 
 int open_fifo(char *fifo_name);
 
-void close_fifo(int fifo_fd);
+void close_fifo(void);
 
-char *initialize_shm(char *shm_name);
+char *initialize_shm(void);
 
-request *extract_request(char *shm_name);
+request *extract_request(void);
 
-int send_request(int fifo_fd, request *r);
+int send_request(request *r);
 
-int wait_reponse();
+int wait_reponse(void);
+
+void manage_client_signals(void);
+
+static void handle_sigclient(int signum);
 
 /* @author antoine guillory
  * @brief free ressources of the client.
  * @since 0.6
  */
-void close_client();
+void close_client(void);
 
 #endif  //CLIENT_H

@@ -9,7 +9,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
-
+#include <signal.h>
 
 #include "client.h"
 
@@ -17,38 +17,42 @@
 #include "global_server.h"
 
 
+int fifo_fd;
+char* shm_name;
+
 int main(void){
     greet_user();
-    int fifo_fd = open_fifo(FIFO_SERVER_NAME);
-    char *shm_name = concat(SHM_NAME, rdmnb_to_str(NB_NUMBER_FOR_NAME_SHM));
-    char *shm = initialize_shm(shm_name);
+    manage_client_signals();
+    fifo_fd  = open_fifo(FIFO_SERVER_NAME);
+    shm_name = concat(SHM_NAME, rdmnb_to_str(NB_NUMBER_FOR_NAME_SHM));
+    char *shm = initialize_shm();
     if (shm == NULL) {
-        handle_error_main(fifo_fd, shm_name);
+        handle_error_main();
     }
     while (1) {
-        request *r = extract_request(shm_name);
+        request *r = extract_request();
         if (r == NULL) {
             break;
         }
         //printf("%s,%s,%s;\n", r->shm_linked, r->cmd_name, r->cmd_param);
-        if (send_request(fifo_fd, r) == -1 ) {
+        if (send_request(r) == -1 ) {
             free(r);
-            handle_error_main(fifo_fd, shm_name);
+            handle_error_main();
         }
         free(r);
         if (wait_reponse() == -1) {
-            handle_error_main(fifo_fd, shm_name);
+            handle_error_main();
         }
         printf("%s\n", shm);
     }
     printf("%s See u later !\n", CLIENT_HEADER);
-    close_client(fifo_fd, shm_name);
+    close_client();
     return EXIT_SUCCESS;
 }
 
-void handle_error_main(int fifo_fd, char*shm_name) {
+void handle_error_main() {
     fprintf(stderr, "%s Error in the matrix.\n", CLIENT_HEADER);
-    close_client(fifo_fd, shm_name);
+    close_client();
     exit(EXIT_FAILURE);
 }
 
@@ -73,14 +77,14 @@ int open_fifo(char *fifo_name){
     return fifo_fd;
 }
 
-void close_fifo(int fifo_fd) {
+void close_fifo(void) {
     if (close(fifo_fd) == -1) {
         perror("close");
         exit(EXIT_FAILURE);
     }
 }
 
-char *initialize_shm(char *shm_name) {
+char *initialize_shm(void) {
     int fd = shm_open(shm_name, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
     if (fd == -1) {
         perror("shm_open");
@@ -103,7 +107,7 @@ char *initialize_shm(char *shm_name) {
     return mem;
 }
 
-request *extract_request(char *shm_name) {
+request *extract_request(void) {
     char cmd[CMD_SIZE];
     char param[256];
     printf("Command ?> ");
@@ -139,7 +143,7 @@ request *extract_request(char *shm_name) {
     }
     else {
         printf("Unknown command !\n");
-        return extract_request(shm_name);
+        return extract_request();
     }
 
     request *result = malloc(sizeof(*result));
@@ -147,13 +151,14 @@ request *extract_request(char *shm_name) {
         perror("malloc");
         exit(EXIT_FAILURE);
     }
+    result->client_pid = getpid();
     result->shm_linked = shm_name;
     result->cmd_name = cmd;
     result->cmd_param = param;
     return result;
 }
 
-int send_request(int fifo_fd, request *r) {
+int send_request(request *r) {
     sem_t *sem = sem_open(SEM_RQST_NAME, O_WRONLY);
     if (sem == SEM_FAILED) {
         perror("sem_open");
@@ -170,7 +175,24 @@ int send_request(int fifo_fd, request *r) {
     return 0;
 }
 
-int wait_reponse() {
+void manage_client_signals(void){
+    struct sigaction sigusr1act;
+    sigusr1act.sa_handler = handle_sigclient;
+    if (sigaction(SIGUSR1, &sigusr1act, NULL) < 0) {
+        printf("%s Cannot manage SIGUSR1\n",CLIENT_HEADER);
+        close_client();
+    }
+}
+
+static void handle_sigclient(int signum) {
+    if(signum==SIGUSR1){
+        //TODO Meilleure gestion...
+        printf("%s Internal server error, client exited.\n", CLIENT_HEADER);
+        close_client();
+    }
+}
+
+int wait_reponse(void) {
     sem_t *sem = sem_open(SEM_REPONSE_NAME, O_RDONLY);
     if (sem == SEM_FAILED) {
         perror("sem_open");
@@ -183,7 +205,7 @@ int wait_reponse() {
     return 0;
 }
 
-void close_client(int fifo_fd, char *shm_name){
+void close_client(void){
     free(shm_name);
-    close_fifo(fifo_fd);
+    close_fifo();
 }

@@ -18,11 +18,17 @@
  */
 enum choose_type {NAME, UID};
 
+
+typedef struct s_usrargs {
+    void * user;
+    enum choose_type type;
+} usrargs;
+
 /*
  *  Send informations about user in STDOUT_FILENO.
  *    User can be indicate with uid or string.
  *    return -1 if error else 0.
  */
-int info_user(void *user, enum choose_type type);
+int info_user(usrargs* args);
 
 #endif  //INFO_USER_H

@@ -18,6 +18,8 @@ typedef struct s_request {
     char *shm_linked;
     char *cmd_name;
     char *cmd_param;
+    pid_t client_pid;
 } request;
+
 
 #endif  // GLOBAL_SERVER_H
