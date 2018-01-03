@@ -3,12 +3,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-
 
 /*
  *  Simple copy in a new memomy allocated.
@@ -86,7 +84,7 @@ void *get_uid(char *line) {
       exit(EXIT_FAILURE);
     }
     long int r = strtol(uid_str, NULL, 10);
-    if (r == LONG_MIN || r == LONG_MAX) {
+    if (r == 0 && strcmp(uid_str, "0") != 0) {
       perror("strtol");
       return NULL;
     }
@@ -122,14 +120,14 @@ int select_user(void *user, char **line, FILE *f,
 }
 
 int info_user(usrargs* args) {
-    void* user = args->user;
+    void *user = args->user;
     enum choose_type type = args->type;
-    FILE *f;
+    FILE *f = NULL;
     if ((f = fopen(PATH_PASSWD,"r")) == NULL) {
         perror("fopen");
         return -1;
     }
-
+    
     char *line = malloc(MAX_LENGTH_LINE);
     if (line == NULL) {
       perror("malloc");
@@ -167,16 +165,29 @@ int info_user(usrargs* args) {
 
 //  Jeux de test
 
-// int main(void) {
-    // uid_t uid = 118;
-    // if (info_user(&uid, UID) == -1) {
-        // printf("T null");
-        // return EXIT_FAILURE;
-    // }
-    // char *name = "irc";
-    // if (info_user(name, NAME) == -1) {
-        // printf("T null");
-        // return EXIT_FAILURE;
-    // }
-    // return EXIT_SUCCESS;
-// }
+int main(int argc, char **argv) {
+    if (argc != 3) {
+        fprintf(stderr, "Too many arguments.\n");
+        return EXIT_FAILURE;
+    }
+    usrargs arg;
+    if (strcmp(argv[1], "-n") == 0) {
+        arg.user = argv[2];
+        arg.type = NAME;
+    } else if (strcmp(argv[1], "-u") == 0) {
+        uid_t uid = strtol(argv[2], NULL, 10);
+        if (uid == 0 && strcmp(argv[2], "0") != 0) {
+            fprintf(stderr, "uid isn't correct.\n");
+            return EXIT_FAILURE;
+        }
+        arg.user = &uid;
+        arg.type = UID;
+    } else {
+        fprintf(stderr, "usage: ./%s (-n OR -u) arg", argv[0]);
+    }    
+    if (info_user(&arg) == -1) {
+        fprintf(stderr, "error in info_user.\n");
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}

@@ -20,6 +20,23 @@
  */
 int fifo_fd;
 
+// IL faut que l'on gère les signaux entrant sur le processus,
+//    Ces signaux utiliseront close_server()
+
+int main(void) {
+    greet_user();
+    fifo_fd = initialize_fifo();
+    //Initialisation of the new behaviour for SIGINT must be called 
+    //after FIFO initialisation. Before that, the default behaviour 
+    //of SIGINT is appropriated.
+    manage_signals();
+    
+    while (1) {
+        treatment_request();
+    }
+    return EXIT_SUCCESS;
+}
+
 void greet_user(void){
     printf("%s Welcome to DaemonUserInfo Server (Version : %s)\n", SERVER_HEADER, SERVER_VERSION);
     printf("%s please visit https://github.com/antoineguillory/DaemonUserProcInfo for other informations\n", SERVER_HEADER);
@@ -35,33 +52,46 @@ int initialize_fifo(void) {
     return fifo_fd;
 }
 
-sem_t *initialize_sem(char *sem_name, unsigned int value) {
-    sem_t *sem = sem_open(sem_name, O_CREAT, S_IRUSR | S_IWUSR, value);
-    if (sem == SEM_FAILED) {
-        fprintf(stderr, "%s sem creation failed. Initialisation aborted.\n", SERVER_HEADER);
-        perror("sem_open");
-        exit(EXIT_FAILURE);
-    }
-    if (sem_unlink(sem_name) == -1) {
-        fprintf(stderr, "%s sem creation failed. Initialisation aborted.\n", SERVER_HEADER);
-        perror("sem_unlink");
-        exit(EXIT_FAILURE);
-    }
-    return sem;
+struct th_args {
+  char cmd[SIZE_INFO_PROC];
+  char option[3];
+  char arg[SIZE_PARAM];
+};
+
+void *run(struct th_args *a) {
+  // fork et exec
+  
+  free(a);
+  return NULL;
 }
 
-void treatment_request(int fifo_fd) {
+
+void treatment_request() {
     request *r = NULL;
     if ((size_t)read(fifo_fd, r, sizeof(*r)) < sizeof(*r)) {
         perror("read");
         exit(EXIT_FAILURE);
     }
-    int shm_fd;
-    if((shm_fd=init_shm_ofclient(r->shm_linked))==0){
-        close_server();
+    
+    pthread_t th;
+    struct th_args *a = malloc(sizeof(struct th_args));
+    if (a == NULL) {
+      perror("malloc");
+      exit(EXIT_FAILURE);
     }
-    // + appel à la fonction demandée
-    if(strcmp(r->cmd_name,"useru")==0){
+    strcpy(a->s, "");
+    
+    if (pthread_create(&th, NULL, (void *(*)(void *))run, a) != 0) {
+        perror("pthread_create");
+        exit(EXIT_FAILURE);
+    }
+  
+    int shm_fd;
+    if ((shm_fd = init_shm_ofclient(r->shm_linked)) == 0){
+        close_server();
+        exit(EXIT_FAILURE);
+    }
+    if (strcmp(r->cmd_name,"useru")==0){
         treatment_useruid(r, shm_fd);
     } else if (strcmp(r->cmd_name,"useri")==0) {
         //TODO
@@ -114,25 +144,6 @@ void treatment_useruid(request* r, int shm_fd){
     dup2(old_stdout, shm_fd);
 }
 
-
-void wait_for_next_question(int fifo_fd, sem_t *sem) {
-    while (1) {
-        if (sem_wait(sem) == -1) {
-            perror("sem_wait");
-            exit(EXIT_FAILURE);
-        }
-        switch (fork()) {
-            case -1 :
-                perror("fork");
-                exit(EXIT_FAILURE);
-            case 0 :
-                break;
-            default :
-                treatment_request(fifo_fd);
-        }
-    }
-}
-
 void close_server(void) {
     if (fifo_fd != 0) {
         if (close(fifo_fd) == -1) {
@@ -156,25 +167,9 @@ void manage_signals(void) {
 }
 
 static void handle_sigserver(int signum){
-    if(signum==SIGINT){
+    if (signum == SIGINT){
         close_server();
         printf("%s Shutdown... Goodbye !\n", SERVER_HEADER);
         exit(EXIT_SUCCESS);
     }
-}
-
-// IL faut que l'on gère les signaux entrant sur le processus,
-//    Ces signaux utiliseront close_server()
-
-int main(void) {
-    greet_user();
-    int fifo_fd = initialize_fifo();
-    sem_t *sem = initialize_sem(SEM_RQST_NAME, 0);
-    //Initialisation of the new behaviour for SIGINT must be called 
-    //after FIFO initialisation. Before that, the default behaviour 
-    //of SIGINT is appropriated.
-    manage_signals();
-    wait_for_next_question(fifo_fd, sem);
-
-    return EXIT_SUCCESS;
 }

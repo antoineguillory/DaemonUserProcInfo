@@ -123,7 +123,7 @@ int info_proc_read(pid_t pid, char *suffix, void (*read)(FILE *)) {
 
     FILE *fd = fopen(filename, "r");
     if (fd == NULL) {
-        perror("fopen");
+        fprintf(stderr, "Proc doesn't exist.\n");
         return -1;
     }
 
@@ -147,4 +147,18 @@ int info_proc(pid_t pid) {
     printf("\n");
 
     return 0;
+}
+
+int main(int argc, char **argv) {
+  if (argc != 2) {
+    fprintf(stderr, "Too many arguments.\n");
+    return EXIT_FAILURE;
+  }
+  pid_t n = strtol(argv[1], NULL, 10);
+  if (n == 0 && strcmp(argv[1], "0") != 0) {
+    printf("pid isn't correct.\n");
+    return EXIT_FAILURE;
+  }
+  info_proc(n);
+  return EXIT_SUCCESS;
 }
