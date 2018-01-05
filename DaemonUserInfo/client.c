@@ -51,7 +51,7 @@ int main(void) {
             close_client();
             exit(EXIT_FAILURE);
         }
-        printf("%s %s", CLIENT_HEADER, shm);
+        printf("%s %s\n%s", CLIENT_HEADER, r->cmd_param, shm);
     }
     close_client();
     printf("%s See u later !\n", CLIENT_HEADER);

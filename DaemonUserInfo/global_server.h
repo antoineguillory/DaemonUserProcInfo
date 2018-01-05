@@ -4,7 +4,7 @@
 #include <sys/types.h>
 
 #define FIFO_SERVER_NAME  "/tmp/Daemon_User_Info_58062572.fifo"
-#define SIZE_FIXE_SHM 4096
+#define SIZE_FIXE_SHM 1024
 
 #define SIZE_SHM_SEM_NAME 14
 #define SIZE_CMD 6

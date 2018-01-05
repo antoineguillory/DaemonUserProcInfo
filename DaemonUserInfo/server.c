@@ -75,7 +75,7 @@ char *read_response(int p_read) {
     char *buf = malloc(sizeof(*buf) * (BUF_SIZE + 1));
     ssize_t n;
     size_t len = BUF_SIZE;
-    while ((n = read(p_read, buf, BUF_SIZE)) > 0) {
+    while ((n = read(p_read, (buf + len - BUF_SIZE), BUF_SIZE)) > 0) {
         len += (size_t) n;
         if (n == BUF_SIZE) {
             buf = realloc(buf, len);
@@ -89,7 +89,7 @@ char *read_response(int p_read) {
         perror("read");
         return NULL;
     }
-    *(buf + len) = '\0';
+    *(buf + len - 1) = '\0';
     return buf;
 }
 
