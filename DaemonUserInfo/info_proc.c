@@ -1,9 +1,13 @@
-#include "info_proc.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+
+#define SEPARATOR_PROC ":"
+
+#define PREFIX_FILE "/proc/"
+#define SUFFIX_FILE_STATUS "/status"
+#define SUFFIX_FILE_CMD "/cmdline"
 
 /*
  * Function must be move to util.c
@@ -37,6 +41,7 @@ char *define_filename(pid_t pid, char *suffix) {
     strcpy(filename, PREFIX_FILE);
     sprintf(str_pid, "%d", ((int) pid));
     strcat(filename, str_pid);
+    free(str_pid);
     strcat(filename, suffix);
     return filename;
 }
@@ -61,7 +66,7 @@ void skip(FILE *fd, char skip) {
  */
 void read_content(FILE *fd) {
     int fg = fgetc(fd);
-    while (fg != EOF) {
+    while (fg != '\0' && fg != EOF) {
         printf("%c", (char) fg);
         fg = fgetc(fd);
     }
@@ -115,19 +120,20 @@ void read_status(FILE *fd) {
  *    with suffix = suffix and function read.
  *    return -1 if error else 0.
  */
-int info_proc_read(pid_t pid, char *suffix, void (*read)(FILE *)) {
+int info_proc_read(pid_t pid, char *suffix, void (*fct_read)(FILE *)) {
     char *filename = define_filename(pid, suffix);
     if (filename == NULL) {
         return -1;
     }
 
     FILE *fd = fopen(filename, "r");
+    free(filename);
     if (fd == NULL) {
-        fprintf(stderr, "Proc doesn't exist.\n");
+        printf("proc doesn't exist.\n");
         return -1;
     }
 
-    read(fd);
+    fct_read(fd);
 
     if (fclose(fd) == -1) {
         perror("fclose");
@@ -136,6 +142,13 @@ int info_proc_read(pid_t pid, char *suffix, void (*read)(FILE *)) {
     return 0;
 }
 
+/*
+ * Function read in stdout information of proc with pid = pid.
+ *  Format = "cmdline:name:umask:state:pid:ppid:uidreal:uideffect:	\
+ *    uidsave:gidreal:gideffect:uidsave\n"
+ *
+ *    return -1 if error else 0.
+ */
 int info_proc(pid_t pid) {
     if (info_proc_read(pid, SUFFIX_FILE_CMD, read_content) == -1) {
         return -1;

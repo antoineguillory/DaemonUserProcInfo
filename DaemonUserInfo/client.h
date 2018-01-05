@@ -17,42 +17,17 @@
 #include "util.h"
 #include "global_server.h"
 
-#define SHM_NAME  "/shm_"
-#define SIZE_CMD 6
 #define PID_UID_MAX 32768
-
-#define CMD_PROC  "proc"
-#define CMD_USER_UID "useru"
-#define CMD_USER_NAME "usern"
-#define CMD_EXIT  "exit"
 
 #define CLIENT_HEADER  "[CLIENT] :"
 #define CLIENT_VERSION "0.6"
 
-void print_help();
+request *extract_request(char *shm_name, char *sem_name);
 
-/* @author antoine guillory
- * @brief greets the user while starting the server
- * @since 0.5
- */
-void greet_user();
+void greet_user(char *id);
 
-int open_fifo(char *fifo_name);
-
-void close_fifo(int fifo_fd);
-
-char *initialize_shm(char *shm_name);
-
-request *extract_request(char *shm_name);
-
-int send_request(int fifo_fd, request *r);
-
-int wait_reponse();
-
-/* @author antoine guillory
- * @brief free ressources of the client.
- * @since 0.6
- */
 void close_client();
+
+void manage_client_signals(void);
 
 #endif  //CLIENT_H

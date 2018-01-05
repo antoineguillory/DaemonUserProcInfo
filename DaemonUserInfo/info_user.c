@@ -1,5 +1,3 @@
-#include "info_user.h"
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -7,6 +5,21 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+
+#define NEXT_INFO(line, save)   strtok_r(line, SEPARATOR_USER, &save)
+
+#define OPTION_USERNAME "-n"
+#define OPTION_USERUID "-u"
+#define OPTION_HELP "-h"
+#define SEPARATOR_USER ":"
+#define PATH_PASSWD "/etc/passwd"
+#define MAX_LENGTH_LINE 256
+
+/*
+ *  Choose your type of information what you would communicate on input.
+ *    Must be move to global.h
+ */
+enum choose_type {NAME, UID};
 
 /*
  *  Simple copy in a new memomy allocated.
@@ -119,16 +132,19 @@ int select_user(void *user, char **line, FILE *f,
     return 0;
 }
 
-int info_user(usrargs* args) {
-    void *user = args->user;
-    enum choose_type type = args->type;
+/*
+ *  Send informations about user in STDOUT_FILENO.
+ *    User can be indicate with uid or string.
+ *    return -1 if error else 0.
+ */
+int info_user(void *user, enum choose_type type) {
     FILE *f = NULL;
     if ((f = fopen(PATH_PASSWD,"r")) == NULL) {
         perror("fopen");
         return -1;
     }
     
-    char *line = malloc(MAX_LENGTH_LINE);
+    char *line = malloc(sizeof(*line) * MAX_LENGTH_LINE);
     if (line == NULL) {
       perror("malloc");
       exit(EXIT_FAILURE);
@@ -150,8 +166,8 @@ int info_user(usrargs* args) {
             perror("fclose");
             return -1;
         }
-        fprintf(stderr, "user doesn't found\n");
-        return -1;
+        printf("user doesn't found\n");
+        return 0;
     }
     print_user(line);
 
@@ -163,30 +179,40 @@ int info_user(usrargs* args) {
     return 0;
 }
 
-//  Jeux de test
+void print_usage(char *name_exec) {    
+    printf("usage: %s [%s] (%s OR %s) arg\n", name_exec, OPTION_HELP,
+        OPTION_USERNAME, OPTION_USERUID);
+}
 
 int main(int argc, char **argv) {
-    if (argc != 3) {
+    if (argc > 3) {
         fprintf(stderr, "Too many arguments.\n");
+        print_usage(argv[0]);
         return EXIT_FAILURE;
     }
-    usrargs arg;
-    if (strcmp(argv[1], "-n") == 0) {
-        arg.user = argv[2];
-        arg.type = NAME;
-    } else if (strcmp(argv[1], "-u") == 0) {
-        uid_t uid = strtol(argv[2], NULL, 10);
+    void *user;
+    enum choose_type type;
+    if (strcmp(argv[1], OPTION_HELP) == 0) {
+        printf("Help : ");
+        print_usage(argv[0]);
+        return EXIT_SUCCESS;
+    } else if (strcmp(argv[1], OPTION_USERNAME) == 0 && argc == 3) {
+        user = argv[2];
+        type = NAME;
+    } else if (strcmp(argv[1], OPTION_USERUID) == 0  && argc == 3) {
+        uid_t uid = (uid_t) strtol(argv[2], NULL, 10);
         if (uid == 0 && strcmp(argv[2], "0") != 0) {
             fprintf(stderr, "uid isn't correct.\n");
             return EXIT_FAILURE;
         }
-        arg.user = &uid;
-        arg.type = UID;
+        user = &uid;
+        type = UID;
     } else {
-        fprintf(stderr, "usage: ./%s (-n OR -u) arg", argv[0]);
+        fprintf(stderr, "Unknown option.\n");
+        print_usage(argv[0]);
+        return EXIT_FAILURE;
     }    
-    if (info_user(&arg) == -1) {
-        fprintf(stderr, "error in info_user.\n");
+    if (info_user(user, type) == -1) {
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;

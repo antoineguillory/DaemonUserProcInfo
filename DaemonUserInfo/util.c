@@ -1,10 +1,15 @@
 #include "util.h"
-#include <string.h>
+
+#include <ctype.h>
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <time.h>
-#include <ctype.h>
-
+#include <fcntl.h>
+#include <string.h>
 
 char* to_lower(char* str){
     for(int i = 0; str[i]; i++){
@@ -53,17 +58,52 @@ char *rdmnb_to_str(size_t n) {
     return result;
 }
 
-//Main de test de la bibliothèque utilitaire.
-/*int main(void) {
-    char alpha[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    char coolstr[]= "cool";
-    char concatstr[]="concat";
-    printf("TEST TOLOWER : ABCDEFGHIJKLMNOPQRSTUVWXYZ : %s\n", to_lower(alpha));
-    printf("test concat str1: cool str2:concat : %s\n",concat("cool","concat"));
-    char* cool = malloc(strlen(coolstr)+strlen(concatstr)+1);
-    char* randomstr=malloc(15);
-    rand_str(randomstr, (size_t)15);
-    printf("test random STR de taille 15 : %s\n", randomstr);
-    free(cool);
-    return 0;
-}*/
+sem_t *init_sem(char *sem_name, unsigned int value) {
+    sem_t *sem = sem_open(sem_name, O_RDWR | O_CREAT | O_EXCL,
+        S_IRUSR | S_IWUSR, value);
+    if (sem == SEM_FAILED) {
+        perror("sem_open");
+        exit(EXIT_FAILURE);
+    }
+    return sem;
+}
+
+void *init_shm(char *shm_name, size_t size) {
+    int fd = shm_open(shm_name, O_RDWR | O_CREAT,
+        S_IRUSR | S_IWUSR);
+    if (fd == -1) {
+        perror("shm_open");
+        return NULL;
+    }
+    if (ftruncate(fd, (off_t)size) == -1) {
+        perror("ftruncate");
+        return NULL;
+    }
+    void *mem = mmap(NULL, size, PROT_WRITE | PROT_READ, MAP_SHARED,
+        fd, 0);
+    if (mem == MAP_FAILED) {
+        perror("mmap");
+        return NULL;
+    }
+    return mem;
+}
+
+void *project_shm(char *shm_name, size_t size) {
+    int fd = shm_open(shm_name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    if (fd == -1) {
+        perror("shm_open");
+        return NULL;
+    }
+    void *mem = mmap(NULL, size,
+        PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
+    if (mem == MAP_FAILED) {
+        perror("mmap");
+        return NULL;
+    }
+    return mem;
+}
+
+int file_exits(const char *filename) {
+  struct stat s;
+  return (stat(filename, &s) != -1);
+}

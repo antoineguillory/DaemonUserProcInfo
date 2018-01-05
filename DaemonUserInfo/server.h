@@ -3,47 +3,48 @@
 
 #include "global_server.h"
 
-#include <semaphore.h>
+/*
+ * init_fifo_server va initialiser la variable globale fifo_fd.
+ *  si le fifo existe déjà, il est détruit et recréé.
+ */
+void init_fifo_server(void);
 
-/* @author antoine guillory
- * @brief greets the user while starting the server
- * @since 0.2
+/* On renvoie la réponse lue à travers le pipe de lecture p_read
+ *  qui est allouée dynamiquement.
+ *  Si la fonction échoue, renvoie NULL.
+ */
+char *read_response(int p_read);
+
+/*
+ * 
+void exec_request(request *r);
+
+/*
+ * Traitement de la requète : on effectue la commande demandée.
+ * Si la fonction réussie, le client reçoit la réponse.
+ * Sinon le serveur et le client de la requète sont fermés.
+void treatment_request(request *r);
+
+/*
+ * On crée un nouveau fil qui va traiter la requète r.
+ *  Si la fonction réussi, le serveur indique d'où vient la requète.
+ *  Sinon le serveur et le client de la requète sont fermés.
+ */
+void create_thread_request(request *r);
+
+/*
+ * Fonction d'introduction au serveur.
  */
 void greet_user(void);
 
-/* @author antoine guillory
- * @brief initialize the fifo to communicate between clients & server
- * @since 0.3
- * @return fd of fifo
- */
-int initialize_fifo(void);
-
-int init_shm_ofclient(char * shm_name);
-
-
-/* @author antoine guillory
- * @brief wait for the next question from a client.
- * @since 0.4
- */
-void wait_for_next_question(int fifo_fd, sem_t *sem);
-
-void treatment_request(int fifo_fd);
-
-void treatment_useruid(request* r, int shm_fd);
-
-/* @author antoine guillory
- * @brief free ressources. must be called when server needs to stop
- * @since 0.3
- */
+/*
+ * Fonction de fermeture du serveur.
+ *  On ferme et détruit le fifo.
 void close_server(void);
 
-static void handle_sigserver(int signum);
-
-/* @author antoine guillory
- * @brief manage signals to close ressources properly
- * @since 0.9
+/*
+ * Fonction de gestion des signaux.
  */
 void manage_signals(void);
-
 
 #endif   //SERVER_H
