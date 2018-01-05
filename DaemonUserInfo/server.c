@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <string.h>
 #include <pthread.h>
@@ -11,6 +12,7 @@
 #include <pthread.h>
 
 #include "server.h"
+
 #include "global_server.h"
 #include "util.h"
 
@@ -32,30 +34,26 @@ int fifo_fd;
 int main(void) {
     greet_user();
     
-    init_fifo_server();
-    manage_signals();
+    init_server();
+    manage_server_signals();
     
     while (1) {
-        request *r = malloc(sizeof(*r));
-        if (r == NULL) {
-            perror("malloc");
-            close_server();
-            exit(EXIT_FAILURE);
-        }
-        ssize_t n = read(fifo_fd, r, sizeof(*r));
+        request r;
+        ssize_t n = read(fifo_fd, &r, sizeof(r));
         if (n == -1) {
             perror("read");
-            EXIT_ERROR(r);
+            close_server();
+            exit(EXIT_FAILURE);
         }
         if (n == 0) {
             continue;
         }
-        create_thread_request(r);
+        create_thread_request(&r);
     }
     return EXIT_SUCCESS;
 }
 
-void init_fifo_server() {
+void init_server() {
     if (file_exits(FIFO_SERVER_NAME)) {
         if (unlink(FIFO_SERVER_NAME) == -1) {
             perror("unlink");
@@ -139,12 +137,16 @@ void treatment_request(request *r) {
             fprintf(stderr, "exec_request");
             EXIT_ERROR(r);
         default:
+            if(wait(NULL) == -1) {
+                perror("wait");
+                EXIT_ERROR(r);
+            }
             if (close(p[1]) == -1) {
                 perror("close");
                 EXIT_ERROR(r);
             }
-            response = read_response(r, p[0]);
-            if response == NULL) {
+            response = read_response(p[0]);
+            if (response == NULL) {
                 EXIT_ERROR(r);
             }
             break;
@@ -184,7 +186,6 @@ void create_thread_request(request *r) {
         perror("pthread_create");
         EXIT_ERROR(r);
     }
-    printf("%s Request by client N°%u\n", SERVER_HEADER, r->client_pid);
 }
 
 void greet_user(void){
@@ -213,7 +214,7 @@ static void handle_sigserver(int signum){
     }
 }
 
-void manage_signals(void) {
+void manage_server_signals(void) {
     struct sigaction sigintact;
     sigintact.sa_handler = handle_sigserver;
     if (sigaction(SIGINT, &sigintact, NULL) < 0) {

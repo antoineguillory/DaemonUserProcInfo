@@ -172,6 +172,8 @@ int main(int argc, char **argv) {
     printf("pid isn't correct.\n");
     return EXIT_FAILURE;
   }
-  info_proc(n);
+  if (info_proc(n) == -1) {
+      return EXIT_FAILURE;
+  }
   return EXIT_SUCCESS;
 }

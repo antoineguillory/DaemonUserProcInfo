@@ -20,9 +20,9 @@ void rand_str(char *dest, size_t length);
 
 char *rdmnb_to_str(size_t n);
 
-void *init_shm(char *shm_name, size_t size);
-
 sem_t *init_sem(char *sem_name, unsigned int value);
+
+void *project_new_shm(char *shm_name, size_t size);
 
 void *project_shm(char *shm_name, size_t size);
 

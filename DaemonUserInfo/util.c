@@ -68,7 +68,7 @@ sem_t *init_sem(char *sem_name, unsigned int value) {
     return sem;
 }
 
-void *init_shm(char *shm_name, size_t size) {
+void *project_new_shm(char *shm_name, size_t size) {
     int fd = shm_open(shm_name, O_RDWR | O_CREAT,
         S_IRUSR | S_IWUSR);
     if (fd == -1) {
