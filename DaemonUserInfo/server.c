@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <string.h>
 #include <pthread.h>
@@ -11,126 +12,185 @@
 #include <pthread.h>
 
 #include "server.h"
-#include "info_user.h"
-#include "info_proc.h"
+
+#include "global_server.h"
+#include "util.h"
+
+#define BUF_SIZE 128
+
+#define EXIT_ERROR(r)                           \
+    close_server();                             \
+    if (kill(r->client_pid, SIGUSR1) == -1) {   \
+        perror("kill");                         \
+    }                                           \
+    exit(EXIT_FAILURE);
 
 /*
  * Fifo_fd doit être globale. Nous avons besoin de son état dans
- * L'appel des signaux.
+ * l'appel des signaux.
  */
 int fifo_fd;
+
+int main(void) {
+    greet_user();
+    
+    init_server();
+    manage_server_signals();
+    
+    while (1) {
+        request r;
+        ssize_t n = read(fifo_fd, &r, sizeof(r));
+        if (n == -1) {
+            perror("read");
+            close_server();
+            exit(EXIT_FAILURE);
+        }
+        if (n == 0) {
+            continue;
+        }
+        create_thread_request(&r);
+    }
+    return EXIT_SUCCESS;
+}
+
+void init_server() {
+    if (file_exits(FIFO_SERVER_NAME)) {
+        if (unlink(FIFO_SERVER_NAME) == -1) {
+            perror("unlink");
+            exit(EXIT_FAILURE);
+        }
+    }
+    if (mkfifo(FIFO_SERVER_NAME, S_IRUSR | S_IWUSR) == -1) {
+        perror("mkfifo");
+        exit(EXIT_FAILURE);
+    }
+    fifo_fd = open(FIFO_SERVER_NAME, O_RDONLY);
+    if (fifo_fd == -1) {
+        perror("open");
+        exit(EXIT_FAILURE);
+    }
+}
+
+char *read_response(int p_read) {
+    char *buf = malloc(sizeof(*buf) * (BUF_SIZE + 1));
+    ssize_t n;
+    size_t len = 0;
+    while ((n = read(p_read, (buf + len), BUF_SIZE)) > 0) {
+        len += (size_t) n;
+        if (n == BUF_SIZE) {
+            buf = realloc(buf, len + BUF_SIZE);
+            if (buf == NULL) {
+                perror("realloc");
+                return NULL;
+            }
+        }
+    }
+    if (n == -1) {
+        perror("read");
+        return NULL;
+    }
+    *(buf + len) = '\0';
+    return buf;
+}
+
+void exec_request(request *r) {
+    if (strcmp(r->cmd_name, CMD_PROC) == 0) {
+        execlp("./info_proc", "./info_proc", r->cmd_param, NULL);
+        perror("execlp CMD_PROC");
+    } else {
+        char *cmd = "./info_user";
+        if (strcmp(r->cmd_name, CMD_USER_NAME) == 0) {
+            execlp(cmd, cmd, "-n", r->cmd_param, NULL);
+            perror("execlp CMD_USER_NAME");
+        } else if (strcmp(r->cmd_name, CMD_USER_UID) == 0) {
+            execlp(cmd, cmd, "-u", r->cmd_param, NULL);
+            perror("execlp CMD_USER_UID");
+        } else {
+            fprintf(stderr, "unknown cmd.");
+        }
+    }
+    EXIT_ERROR(r);
+}
+
+void treatment_request(request *r) {
+    int p[2];
+    if (pipe(p) == -1) {
+        perror("pipe");
+        EXIT_ERROR(r);
+    }
+
+    char *response;
+    switch (fork()) {
+        case -1:
+            perror("fork");
+            EXIT_ERROR(r);
+        case 0:
+            if (close(p[0]) == -1) {
+                perror("close");
+                EXIT_ERROR(r);
+            }
+            if (dup2(p[1], STDOUT_FILENO) == -1) {
+                perror("dup2");
+                EXIT_ERROR(r);
+            }
+            exec_request(r);
+            fprintf(stderr, "exec_request");
+            EXIT_ERROR(r);
+        default:
+            if (close(p[1]) == -1) {
+                perror("close");
+                EXIT_ERROR(r);
+            }
+            response = read_response(p[0]);
+            if (response == NULL) {
+                EXIT_ERROR(r);
+            }
+            if (wait(NULL) == -1) {
+                perror("wait");
+                EXIT_ERROR(r);
+            }
+            break;
+    }
+    
+    char *shm;
+    if ((shm = project_shm(r->shm_linked, SIZE_FIXE_SHM)) == NULL) {
+        EXIT_ERROR(r);
+    }
+    
+    strncpy(shm, response, SIZE_FIXE_SHM);
+    free(response);
+    
+    sem_t *sem_client = sem_open(r->sem_linked, O_RDWR);
+    if (sem_client == SEM_FAILED) {
+        perror("sem_open");
+        EXIT_ERROR(r);
+    }
+    if (sem_post(sem_client) == -1) {
+        perror("sem_post");
+        EXIT_ERROR(r);
+    }
+}
+
+void create_thread_request(request *r) {
+    pthread_attr_t attr;
+    if (pthread_attr_init(&attr) != 0) {
+        perror("pthread_attr_init");
+        EXIT_ERROR(r);
+    }
+    if (pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED) != 0) {
+        perror("pthread_attr_setdetachstate");
+        EXIT_ERROR(r);
+    }
+    pthread_t th;    
+    if (pthread_create(&th, &attr, (void *(*)(void *))treatment_request, r) != 0) {
+        perror("pthread_create");
+        EXIT_ERROR(r);
+    }
+}
 
 void greet_user(void){
     printf("%s Welcome to DaemonUserInfo Server (Version : %s)\n", SERVER_HEADER, SERVER_VERSION);
     printf("%s please visit https://github.com/antoineguillory/DaemonUserProcInfo for other informations\n", SERVER_HEADER);
-}
-
-int initialize_fifo(void) {
-    fifo_fd = mkfifo(FIFO_SERVER_NAME, 0666);
-    if (fifo_fd == -1) {
-        fprintf(stderr, "%s Fifo creation failed. Initialisation aborted.\n", SERVER_HEADER);
-        perror("Unknown SHM");
-        exit(EXIT_FAILURE);
-    }
-    return fifo_fd;
-}
-
-sem_t *initialize_sem(char *sem_name, unsigned int value) {
-    sem_t *sem = sem_open(sem_name, O_CREAT, S_IRUSR | S_IWUSR, value);
-    if (sem == SEM_FAILED) {
-        fprintf(stderr, "%s sem creation failed. Initialisation aborted.\n", SERVER_HEADER);
-        perror("sem_open");
-        exit(EXIT_FAILURE);
-    }
-    if (sem_unlink(sem_name) == -1) {
-        fprintf(stderr, "%s sem creation failed. Initialisation aborted.\n", SERVER_HEADER);
-        perror("sem_unlink");
-        exit(EXIT_FAILURE);
-    }
-    return sem;
-}
-
-void treatment_request(int fifo_fd) {
-    request *r = NULL;
-    if ((size_t)read(fifo_fd, r, sizeof(*r)) < sizeof(*r)) {
-        perror("read");
-        exit(EXIT_FAILURE);
-    }
-    int shm_fd;
-    if((shm_fd=init_shm_ofclient(r->shm_linked))==0){
-        close_server();
-    }
-    // + appel à la fonction demandée
-    if(strcmp(r->cmd_name,"useru")==0){
-        treatment_useruid(r, shm_fd);
-    } else if (strcmp(r->cmd_name,"useri")==0) {
-        //TODO
-    } //TODO......
-}
-
-int init_shm_ofclient(char * shm_name){
-    int fd = shm_open(shm_name, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
-    if (fd == -1) {
-        perror("shm_open");
-        return 0;
-    }
-    if (shm_unlink(shm_name) == -1) {
-        perror("shm_unlink");
-        return 0;
-    }
-    if (ftruncate(fd, SIZE_FIXE_SHM) == -1) {
-        perror("ftruncate");
-        return 0;
-    }
-    char *mem = mmap(NULL, SIZE_FIXE_SHM,
-    PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
-    if (mem == MAP_FAILED) {
-        perror("mmap");
-        return 0;
-    }
-    return fd;
-}
-
-void treatment_useruid(request* r, int shm_fd){
-    pthread_t th;
-    //On déplace STDOUT vers le shm
-    int old_stdout = STDOUT_FILENO;
-    dup2(shm_fd, STDOUT_FILENO);
-    enum choose_type type;
-    type = NAME;
-    usrargs* args = NULL;
-    args->user = (void*)r->cmd_param;
-    args->type = type;
-    if(pthread_create(&th, NULL, &info_user, args)==-1){
-        kill(r->client_pid,SIGUSR1);
-    }
-    void** retval = NULL;
-    if(pthread_join(&th, retval)==-1){
-        kill(r->client_pid,SIGUSR1);
-    }
-    if((int)retval==-1){
-        kill(r->client_pid,SIGUSR1);
-    }
-    dup2(old_stdout, shm_fd);
-}
-
-
-void wait_for_next_question(int fifo_fd, sem_t *sem) {
-    while (1) {
-        if (sem_wait(sem) == -1) {
-            perror("sem_wait");
-            exit(EXIT_FAILURE);
-        }
-        switch (fork()) {
-            case -1 :
-                perror("fork");
-                exit(EXIT_FAILURE);
-            case 0 :
-                break;
-            default :
-                treatment_request(fifo_fd);
-        }
-    }
 }
 
 void close_server(void) {
@@ -146,35 +206,19 @@ void close_server(void) {
     }
 }
 
-void manage_signals(void) {
-    struct sigaction sigintact;
-    sigintact.sa_handler = handle_sigserver;
-    if (sigaction(SIGINT, &sigintact, NULL) < 0) {
-        printf("%s Cannot manage SIGINT\n",SERVER_HEADER);
-        close_server();
-    }
-}
-
 static void handle_sigserver(int signum){
-    if(signum==SIGINT){
+    if (signum == SIGINT){
         close_server();
         printf("%s Shutdown... Goodbye !\n", SERVER_HEADER);
         exit(EXIT_SUCCESS);
     }
 }
 
-// IL faut que l'on gère les signaux entrant sur le processus,
-//    Ces signaux utiliseront close_server()
-
-int main(void) {
-    greet_user();
-    int fifo_fd = initialize_fifo();
-    sem_t *sem = initialize_sem(SEM_RQST_NAME, 0);
-    //Initialisation of the new behaviour for SIGINT must be called 
-    //after FIFO initialisation. Before that, the default behaviour 
-    //of SIGINT is appropriated.
-    manage_signals();
-    wait_for_next_question(fifo_fd, sem);
-
-    return EXIT_SUCCESS;
+void manage_server_signals(void) {
+    struct sigaction sigintact;
+    sigintact.sa_handler = handle_sigserver;
+    if (sigaction(SIGINT, &sigintact, NULL) < 0) {
+        printf("%s Cannot manage SIGINT\n",SERVER_HEADER);
+        close_server();
+    }
 }
