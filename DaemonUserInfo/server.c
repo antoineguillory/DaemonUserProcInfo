@@ -74,11 +74,11 @@ void init_server() {
 char *read_response(int p_read) {
     char *buf = malloc(sizeof(*buf) * (BUF_SIZE + 1));
     ssize_t n;
-    size_t len = BUF_SIZE;
-    while ((n = read(p_read, (buf + len - BUF_SIZE), BUF_SIZE)) > 0) {
+    size_t len = 0;
+    while ((n = read(p_read, (buf + len), BUF_SIZE)) > 0) {
         len += (size_t) n;
         if (n == BUF_SIZE) {
-            buf = realloc(buf, len);
+            buf = realloc(buf, len + BUF_SIZE);
             if (buf == NULL) {
                 perror("realloc");
                 return NULL;
@@ -89,7 +89,7 @@ char *read_response(int p_read) {
         perror("read");
         return NULL;
     }
-    *(buf + len - 1) = '\0';
+    *(buf + len) = '\0';
     return buf;
 }
 
@@ -137,16 +137,16 @@ void treatment_request(request *r) {
             fprintf(stderr, "exec_request");
             EXIT_ERROR(r);
         default:
-            if(wait(NULL) == -1) {
-                perror("wait");
-                EXIT_ERROR(r);
-            }
             if (close(p[1]) == -1) {
                 perror("close");
                 EXIT_ERROR(r);
             }
             response = read_response(p[0]);
             if (response == NULL) {
+                EXIT_ERROR(r);
+            }
+            if (wait(NULL) == -1) {
+                perror("wait");
                 EXIT_ERROR(r);
             }
             break;
