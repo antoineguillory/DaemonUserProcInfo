@@ -49,21 +49,20 @@ void print_user(char *line) {
     *(line + strlen(line) - 1) = '\0';
     char *save = NULL;
     char *token = NULL;
-    printf("%s%s", NEXT_INFO(line, save), SEPARATOR_USER);   //Username
+    printf("Username = %s\n", NEXT_INFO(line, save));   //Username
     line = NULL;
-    printf("%s%s", NEXT_INFO(line, save), SEPARATOR_USER);   //Password
-    printf("%s%s", NEXT_INFO(line, save), SEPARATOR_USER);   //Uuid
-    printf("%s%s", NEXT_INFO(line, save), SEPARATOR_USER);   //Guid
+    printf("Password = %s\n", NEXT_INFO(line, save));   //Password
+    printf("Uuid = %s\n", NEXT_INFO(line, save));   //Uuid
+    printf("Guid = %s\n", NEXT_INFO(line, save));   //Guid
     token = NEXT_INFO(line, save);
     if (*token != '/') {
-        printf("%s%s", token, SEPARATOR_USER);               //GECOS
+        printf("GECOS = %s\n", token);               //GECOS
         token = NEXT_INFO(line, save);
     }
-    printf("%s%s", token, SEPARATOR_USER);                   //Directory
+    printf("Directory = %s\n", token);                   //Directory
     if ((token = NEXT_INFO(line, save)) != NULL) {
-        printf("%s", token);                            //Shell
+        printf("Shell = %s\n", token);                            //Shell
     }
-    printf("\n");
 }
 
 /*
