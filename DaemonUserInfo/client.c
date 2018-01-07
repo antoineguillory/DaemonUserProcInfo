@@ -59,7 +59,7 @@ int main(void) {
 }
 
 void init_client(char *id) {
-    fifo_fd = open(FIFO_SERVER_NAME, O_WRONLY);
+    fifo_fd = open(FIFO_SERVER_NAME, O_WRONLY | O_APPEND);
     if (fifo_fd == -1) {
         fprintf(stderr, "Server doesn't exist or closed.\n");
         exit(EXIT_FAILURE);

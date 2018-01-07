@@ -31,40 +31,38 @@
  */
 int fifo_fd;
 
-int main(void) {
-    greet_user();
-    
+int main(void) {    
     init_server();
     manage_server_signals();
     
+    greet_user();
+    
     while (1) {
         request r;
-        ssize_t n = read(fifo_fd, &r, sizeof(r));
+        ssize_t n;
+        while((n = read(fifo_fd, &r, sizeof(r))) > 0) {
+            create_thread_request(&r);
+        }
         if (n == -1) {
             perror("read");
             close_server();
             exit(EXIT_FAILURE);
         }
-        if (n == 0) {
-            continue;
-        }
-        create_thread_request(&r);
     }
     return EXIT_SUCCESS;
 }
 
 void init_server() {
     if (file_exits(FIFO_SERVER_NAME)) {
-        if (unlink(FIFO_SERVER_NAME) == -1) {
-            perror("unlink");
-            exit(EXIT_FAILURE);
-        }
+        fprintf(stderr, "%s The server is already launched.\n", SERVER_HEADER);
+        exit(EXIT_FAILURE);
     }
     if (mkfifo(FIFO_SERVER_NAME, S_IRUSR | S_IWUSR) == -1) {
         perror("mkfifo");
         exit(EXIT_FAILURE);
     }
-    fifo_fd = open(FIFO_SERVER_NAME, O_RDONLY);
+    fifo_fd = open(FIFO_SERVER_NAME, O_RDWR);
+
     if (fifo_fd == -1) {
         perror("open");
         exit(EXIT_FAILURE);
@@ -120,7 +118,8 @@ void treatment_request(request *r) {
     }
 
     char *response;
-    switch (fork()) {
+    int pid;
+    switch (pid = fork()) {
         case -1:
             perror("fork");
             EXIT_ERROR(r);
@@ -132,8 +131,7 @@ void treatment_request(request *r) {
             if (dup2(p[1], STDOUT_FILENO) == -1) {
                 perror("dup2");
                 EXIT_ERROR(r);
-            }
-            exec_request(r);
+            }exec_request(r);
             fprintf(stderr, "exec_request");
             EXIT_ERROR(r);
         default:
@@ -145,7 +143,7 @@ void treatment_request(request *r) {
             if (response == NULL) {
                 EXIT_ERROR(r);
             }
-            if (wait(NULL) == -1) {
+            if (waitpid(pid, NULL, 0) == -1) {
                 perror("wait");
                 EXIT_ERROR(r);
             }
@@ -191,6 +189,7 @@ void create_thread_request(request *r) {
 void greet_user(void){
     printf("%s Welcome to DaemonUserInfo Server (Version : %s)\n", SERVER_HEADER, SERVER_VERSION);
     printf("%s please visit https://github.com/antoineguillory/DaemonUserProcInfo for other informations\n", SERVER_HEADER);
+    printf("%s PID of Server is %d.\n", SERVER_HEADER, getpid());
 }
 
 void close_server(void) {
