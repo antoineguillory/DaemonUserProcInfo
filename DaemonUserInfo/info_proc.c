@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Too many arguments.\n");
     return EXIT_FAILURE;
   }
-  pid_t n = strtol(argv[1], NULL, 10);
+  pid_t n = (pid_t) strtol(argv[1], NULL, 10);
   if (n == 0 && strcmp(argv[1], "0") != 0) {
     printf("pid isn't correct.\n");
     return EXIT_FAILURE;
