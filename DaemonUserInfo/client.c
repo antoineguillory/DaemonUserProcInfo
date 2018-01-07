@@ -102,8 +102,11 @@ request *extract_request() {
             fprintf(stderr, "Don't try to buffer overflow my prgm pls :'(\n");
             return NULL;
         }
+    } else if ((strcmp(to_lower(cmd), CMD_HELP)) == 0) {
+        print_help();
+        return extract_request();
     } else {
-        printf("Unknown command !\n");
+        printf("Unknown command ! Use 'help'.\n");
         return extract_request();
     }
 
@@ -121,12 +124,17 @@ request *extract_request() {
     return result;
 }
 
+void print_help(void) {
+    printf("%s Help for the newbies.\n", CLIENT_HEADER);
+    printf("%s Available commands are %s, %s, %s, %s and %s\n", CLIENT_HEADER, CMD_PROC, CMD_USER_UID, CMD_USER_NAME, CMD_HELP, CMD_EXIT);
+}
+
 void greet_user(char *id){
     printf("%s Welcome to DaemonUserInfo Client (Version : %s)\n",
       CLIENT_HEADER, CLIENT_VERSION);
     printf("%s Your are client number %s\n", CLIENT_HEADER, id);
-    printf("%s Available commands are %s %s %s %s\n", CLIENT_HEADER, CMD_PROC, CMD_USER_UID, CMD_USER_NAME, CMD_EXIT);
     printf("%s Please visit https://github.com/antoineguillory/DaemonUserProcInfo for other informations\n", CLIENT_HEADER);
+    print_help();
 }
 
 void close_client() {

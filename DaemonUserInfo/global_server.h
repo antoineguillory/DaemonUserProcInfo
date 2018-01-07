@@ -13,6 +13,7 @@
 #define CMD_PROC  "proc"
 #define CMD_USER_UID "useru"
 #define CMD_USER_NAME "usern"
+#define CMD_HELP  "help"
 #define CMD_EXIT  "exit"
 
 /* Type to modelize a request that contains the name of the shm and sem
