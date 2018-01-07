@@ -132,7 +132,7 @@ void print_help(void) {
 void greet_user(char *id){
     printf("%s Welcome to DaemonUserInfo Client (Version : %s)\n",
       CLIENT_HEADER, CLIENT_VERSION);
-    printf("%s Your are client number %s\n", CLIENT_HEADER, id);
+    printf("%s You are client number %s\n", CLIENT_HEADER, id);
     printf("%s Please visit https://github.com/antoineguillory/DaemonUserProcInfo for other informations\n", CLIENT_HEADER);
     print_help();
 }
