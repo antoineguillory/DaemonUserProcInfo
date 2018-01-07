@@ -25,6 +25,11 @@ void init_client(char *id);
 request *extract_request();
 
 /*
+ * Fonction de renseignement des commandes disponibles.
+ */
+void print_help(void);
+
+/*
  * Fonction d'introduction au client.
  */
 void greet_user(char *id);
